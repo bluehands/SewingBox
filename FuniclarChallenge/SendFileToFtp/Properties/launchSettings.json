@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "SendFileToFtp": {
+      "commandName": "Project",
+      "commandLineArgs": "--host:ftp://test.server --user:me --path-of-file-to-send:myfile.txt --target-folder:/targetFolder --password:xxx"
+    }
+  }
+}
