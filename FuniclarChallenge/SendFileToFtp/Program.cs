@@ -26,7 +26,45 @@ namespace SendFileToFtp
         /// <param name="password"></param>
         /// <param name="base64PrivateKey"></param>
         /// <param name="privateKeyFilePath"></param>
-        public static async Task<Result<int>> Main(
+        public async static Task <int> Main(
+            string pathOfFileToSend,
+            string targetFolder,
+            string host,
+            string user,
+            int port = 22,
+            string authentication = nameof(AuthenticationMode.Password),
+            string? password = null,
+            string? base64PrivateKey = null,
+            string? privateKeyFilePath = null)
+        {
+            Task <Result<int>> transferTask = ExecuteTransfer(pathOfFileToSend,
+                targetFolder,
+                host,
+                user,
+                port,
+                authentication,
+                password,
+                base64PrivateKey,
+                privateKeyFilePath);
+
+            Result<int> outcome = await transferTask;
+
+            if (outcome.Success)
+            {
+                Console.WriteLine("Transfer was successful!");
+
+                return 0;
+            } else
+            {
+                Console.WriteLine("Something went wrong");
+                string reason = outcome.Exception.Message;
+                Console.WriteLine("Reason: {reason}");
+
+                return 1;
+            }
+        }
+
+        public static async Task<Result<int>> ExecuteTransfer(
             string pathOfFileToSend,
             string targetFolder,
             string host,
