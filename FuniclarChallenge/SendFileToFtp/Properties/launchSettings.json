@@ -2,7 +2,8 @@
   "profiles": {
     "SendFileToFtp": {
       "commandName": "Project",
-      "commandLineArgs": "--host:ftp://test.server --user:me --path-of-file-to-send:myfile.txt --target-folder:/targetFolder --password:xxx"
+      // "commandLineArgs": "--host:ftp://test.server --user:me --path-of-file-to-send:myfile.txt --target-folder:/targetFolder --password:xxx",
+      "commandLineArgs": "--host:ftp://wolke.local --user:ftpuser --path-of-file-to-send:FtpLib.dll --target-folder:/files --password:xxx"
     }
   }
 }
