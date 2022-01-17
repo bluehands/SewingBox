@@ -26,37 +26,38 @@ namespace SendFileToFtp
         /// <param name="password"></param>
         /// <param name="base64PrivateKey"></param>
         /// <param name="privateKeyFilePath"></param>
-        public static async Task Main(
+        public static async Task<Result<int>> Main(
             string pathOfFileToSend,
             string targetFolder,
-            string host, 
-            string user, 
-            int port = 22, 
-            string authentication = nameof(AuthenticationMode.Password), 
-            string? password = null, 
-            string? base64PrivateKey = null, 
+            string host,
+            string user,
+            int port = 22,
+            string authentication = nameof(AuthenticationMode.Password),
+            string? password = null,
+            string? base64PrivateKey = null,
             string? privateKeyFilePath = null)
         {
             if (string.IsNullOrEmpty(host))
-                throw new ArgumentException("Host may not be empty");
+                return new Failure<int>(new ArgumentException("Host may not be empty"));
 
             if (port <= 0)
-                throw new ArgumentException("Invalid port. Port has to be greater or equal to zero");
+                return new Failure<int>(new ArgumentException("Invalid port. Port has to be greater or equal to zero"));
 
             Uri? uri;
             try
             {
                 uri = new UriBuilder(host).Uri;
             }
-            catch (Exception)
+            catch (Exception e)
             {
-                throw new ArgumentException("Invalid host uri");
+                return new Failure<int>(new ArgumentException("Invalid host uri", e));
             }
 
             if (!Enum.TryParse(typeof(AuthenticationMode), authentication, out var authenticationMode))
             {
-                throw new ArgumentException(
+                Exception ae = new ArgumentException(
                     $"Parameter authentication has invalid value. Valid values are: {nameof(AuthenticationMode.Password)}, {nameof(AuthenticationMode.PrivateKey)}");
+                return new Failure<int>(ae);
             }
 
             FtpCredentials? credentials = null;
@@ -64,14 +65,17 @@ namespace SendFileToFtp
             {
                 case AuthenticationMode.Password:
                     if (password == null)
-                        throw new ArgumentException("No password provided");
+                        return new Failure<int>(new ArgumentException("No password provided"));
+
                     if (user == null)
-                        throw new ArgumentException("User not provided");
+                        return new Failure<int>(new ArgumentException("User not provided"));
+
                     credentials = FtpCredentials.Password(user, password);
                     break;
                 case AuthenticationMode.PrivateKey:
                     if (user == null)
-                        throw new ArgumentException("User not provided");
+                        return new Failure<int>(new ArgumentException("User not provided"));
+
                     if (base64PrivateKey != null)
                     {
                         var privateKey = Convert.FromBase64String(base64PrivateKey);
@@ -86,26 +90,26 @@ namespace SendFileToFtp
                         }
                         catch (Exception e)
                         {
-                            throw new ArgumentException("Failed to read private key file", e);
+                            return new Failure<int>(new ArgumentException("Failed to read private key file", e));
                         }
                     }
                     break;
                 default:
-                    throw new ArgumentOutOfRangeException();
+                    return new Failure<int>(new ArgumentOutOfRangeException());
             }
 
             if (string.IsNullOrEmpty(pathOfFileToSend))
             {
-                throw new ArgumentException("No upload file path specified");
+                return new Failure<int>(new ArgumentException("No upload file path specified"));
             }
 
             if (string.IsNullOrEmpty(targetFolder))
             {
-                throw new ArgumentException("No target folder specified");
+                return new Failure<int>(new ArgumentException("No target folder specified"));
             }
             if (!targetFolder.StartsWith("/"))
             {
-                throw new ArgumentException("Target folder has to be absolute path on ftp server");
+                return new Failure<int>(new ArgumentException("Target folder has to be absolute path on ftp server"));
             }
 
             byte[] fileToUpload;
@@ -115,7 +119,7 @@ namespace SendFileToFtp
             }
             catch (Exception e)
             {
-                throw new ArgumentException("Failed to file to upload", e);
+                return new Failure<int>(new ArgumentException("Failed to file to upload", e));
             }
 
             var ftpClient = new FtpClient();
@@ -124,10 +128,12 @@ namespace SendFileToFtp
             {
                 await ftpClient.UploadFile(connection, fileToUpload, targetFolder);
                 Console.WriteLine("File uploaded successfully");
+
+                return new Success<int>(0);
             }
             else
             {
-                throw new Exception($"Connect failed: {connection.ConnectError}");
+                return new Failure<int>(new Exception($"Connect failed: {connection.ConnectError}"));
             }
         }
     }
