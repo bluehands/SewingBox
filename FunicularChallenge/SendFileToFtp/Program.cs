@@ -5,7 +5,7 @@ using FtpLib;
 
 //Welcome!
 //Try to refactor the SendFileToFtp program (FtpLib is an 'external' library and cannot be changed). 
-//Make main return 0 in success and 1 in error case and give useful error information to console in case of invalid inputs or ftp errors. 
+//Make Main return 0 in success and 1 in error case and give useful error information to console in case of invalid inputs or ftp errors. 
 //Use the Result type from Funicular.Switch nuget package, introduction is found on github (https://github.com/bluehands/Funicular-Switch). 
 //Useful helper methods are Map, Bind, Match to build the pipeline, Validate to perform checks on input and Try to turn exceptions into Result(s).
 
