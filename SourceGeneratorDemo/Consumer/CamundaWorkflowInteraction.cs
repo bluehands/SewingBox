@@ -7,11 +7,6 @@ public class CamundaWorkflowInteraction
 
 	public void TalkToCamunda()
 	{
-		var variableValue = _workflow.GetVariable(VariableNames.Fehlerort);
+		var variableValue = _workflow.GetVariable(WorkflowVariables.Risikoeinstufung);
 	}
-}
-
-public static class VariableNames
-{
-	public const string Fehlerort = "Fehlerort";
 }
