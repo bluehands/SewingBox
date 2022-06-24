@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32602.215
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WorkflowInteraction", "Consumer\WorkflowInteraction.csproj", "{D00DDC9C-9A46-4A12-9DE2-4E2B5F22251C}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D00DDC9C-9A46-4A12-9DE2-4E2B5F22251C}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D00DDC9C-9A46-4A12-9DE2-4E2B5F22251C}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D00DDC9C-9A46-4A12-9DE2-4E2B5F22251C}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D00DDC9C-9A46-4A12-9DE2-4E2B5F22251C}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {DEDB3398-F4BD-49E0-944A-516CFA897973}
+	EndGlobalSection
+EndGlobal
