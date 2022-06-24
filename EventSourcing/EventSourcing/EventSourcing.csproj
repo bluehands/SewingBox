@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFramework>netstandard2.0</TargetFramework>
+		<IsPackable>true</IsPackable>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<LangVersion>latest</LangVersion>
+
+		<DevelopmentDependency>true</DevelopmentDependency>
+		<IncludeBuildOutput>false</IncludeBuildOutput>
+		<TargetsForTfmSpecificContentInPackage>$(TargetsForTfmSpecificContentInPackage);AddCsFilesToOutput</TargetsForTfmSpecificContentInPackage>
+	</PropertyGroup>
+
+	<Target Name="AddCsFilesToOutput">
+		<ItemGroup>
+			<TfmSpecificPackageFile Include="*.cs" PackagePath="build/content" />
+		</ItemGroup>
+	</Target>
+
+	<ItemGroup>
+	  <PackageReference Include="FunicularSwitch.Generators" Version="1.3.5" />
+	  <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="6.0.0" />
+	  <PackageReference Include="System.Collections.Immutable" Version="6.0.0" />
+	  <PackageReference Include="System.Reactive.Linq" Version="5.0.0" />
+	</ItemGroup>
+
+</Project>
