@@ -1,5 +1,6 @@
 ﻿using System.Reactive.Concurrency;
 using System.Reactive.Linq;
+using Microsoft.Extensions.Logging;
 
 namespace EventSourcing.Internals;
 
@@ -11,7 +12,7 @@ class PeriodicObservable
 		Func<TResult, TArg, TArg> deriveNextState,
 		TimeSpan interval,
 		IScheduler scheduler,
-		Action<Exception> handlePollFailed) =>
+		ILogger? logger) =>
 		Observable.Create<TResult>(observer => scheduler.ScheduleAsync(async (ctrl, ct) =>
 		{
 			var isFirst = true;
@@ -29,8 +30,7 @@ class PeriodicObservable
 				}
 				catch (Exception ex)
 				{
-					//$"Poll failed. No events will be published on stream of type {typeof(TResult).Name}"
-					handlePollFailed(ex);
+					logger?.LogError(ex, $"Poll failed. No events will be published on stream of type {typeof(TResult).Name}");
 				}
 				try
 				{

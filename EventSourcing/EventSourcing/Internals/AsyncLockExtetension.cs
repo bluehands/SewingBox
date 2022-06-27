@@ -1,13 +1,13 @@
 ﻿namespace EventSourcing.Internals;
 
-class AsyncLock : SemaphoreSlim
+public class AsyncLock : SemaphoreSlim
 {
 	public AsyncLock() : base(1, 1)
 	{
 	}
 }
 
-static class SemaphoreSlimExtension
+public static class SemaphoreSlimExtension
 {
 	public static async Task<T> ExecuteGuarded<T>(this SemaphoreSlim semaphore, Func<Task<T>> f)
 	{

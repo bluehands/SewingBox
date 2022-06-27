@@ -1,10 +1,12 @@
-﻿using System.Reactive;
-using System.Reactive.Concurrency;
+﻿using System.Reactive.Concurrency;
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Reactive.Threading.Tasks;
 using EventSourcing.Internals;
+using FunicularSwitch;
+using Microsoft.Extensions.Logging;
 using AsyncLock = EventSourcing.Internals.AsyncLock;
+using Unit = FunicularSwitch.Unit;
 
 namespace EventSourcing;
 
@@ -36,10 +38,10 @@ public sealed class CommandStream : IObservable<Command>, IDisposable
 
 public static class CommandStreamExtension
 {
-	public static IDisposable SubscribeCommandProcessors(this IObservable<Command> commands, GetCommandProcessor getCommandProcessor, WriteEvents writeEvents) =>
+	public static IDisposable SubscribeCommandProcessors(this IObservable<Command> commands, GetCommandProcessor getCommandProcessor, WriteEvents writeEvents, ILogger? logger) =>
 		commands
 			.Process(getCommandProcessor, writeEvents)
-			.Do(r => r.LogResult())
+			.Do(r => r.LogResult(logger))
 			//.Buffer(TimeSpan.FromMilliseconds(100))
 			//.Where(l => l.Count > 0)
 			.SubscribeAsync(async processingResult =>
@@ -51,9 +53,9 @@ public static class CommandStreamExtension
 				}
 				catch (Exception e)
 				{
-					Log.Util.Error(e, "Failed to persist command processed events");
+					logger?.LogError(e, "Failed to persist command processed events");
 				}
-			});
+			}, logger);
 
 	public static IObservable<ProcessingResult> Process(this IObservable<Command> commands,
 		GetCommandProcessor getCommandProcessor, WriteEvents writeEvents) =>
@@ -80,18 +82,68 @@ public static class CommandStreamExtension
 					.ConfigureAwait(false);
 			});
 
-	public static async Task<OperationResult<Unit>> SendCommandAndWaitUntilProcessed(this CommandStream commandStream, IObservable<CommandProcessed> commandProcessedEvents, Command command)
+	public static async Task<OperationResult<Unit>> SendCommandAndWaitUntilApplied(this CommandStream commandStream, IObservable<CommandProcessed> commandProcessedEvents, Command command)
 	{
 		var processed = commandProcessedEvents
 			.FirstAsync(c => c.CommandId == command.Id)
 			.ToTask(CancellationToken.None, Scheduler.Default); //this is needed if we might be called from sync / async mixtures (https://blog.stephencleary.com/2012/12/dont-block-in-asynchronous-code.html)
 		await commandStream.SendCommand(command).ConfigureAwait(false);
-		//while (await Task.WhenAny(Task.Delay(TimeSpan.FromSeconds(1)), processed) != processed)
-		//{
-		//	ThreadPool.GetAvailableThreads(out var availableThreads, out var completionPortThreads);
-		//	Log.Util.Info($"Waiting for command {command.Id} to be processed. Available threads {availableThreads}, completion threads {completionPortThreads}");
-		//}
 
 		return (await processed.ConfigureAwait(false)).OperationResult;
 	}
+}
+
+public record CommandProcessed(CommandId CommandId, OperationResult<Unit> OperationResult, string? ResultMessage) 
+	: EventPayload(StreamIds.Command, EventTypes.CommandProcessed)
+{
+	public override string ToString() => $"{CommandId} processed with result {OperationResult}: {ResultMessage}";
+}
+
+public static partial class StreamIds
+{
+	public const string Command = "Command";
+}
+
+public static partial class EventTypes
+{
+	public const string CommandProcessed = "CommandProcessed";
+}
+
+public static class ProcessingResultExtension
+{
+	public static void LogResult(this ProcessingResult processingResult, ILogger? logger)
+    {
+        processingResult.Match(
+            processed =>
+            {
+                if (processed.FunctionalResult is FunctionalResult.Failed_)
+                    logger?.LogError(processed.ResultMessage);
+                logger?.LogInformation($"Processed command with id {processed.CommandId}. Resulting event count {processed.ResultEvents.Count}. FunctionalResult: {processed.FunctionalResult} Message: {processed.ResultMessage}");
+            },
+            unhandled => logger?.LogError($"Command was not handled {unhandled.CommandId}. Reason: {unhandled.ResultMessage}."),
+            faulted => logger?.LogError(faulted.Exception, $"Error processing command with id {faulted.CommandId}."),
+            cancelled => logger?.LogInformation($"Command with id {cancelled.CommandId} was cancelled")
+        );
+    }
+
+    public static CommandProcessed ToCommandProcessedEvent(this ProcessingResult r)
+    {
+        var operationResult = r.Match(
+            processed: p => p.FunctionalResult.Match(ok: _ => OperationResult.Ok(No.Thing), failed: failed => OperationResult.Error<Unit>(failed.Failure)),
+            unhandled: u => OperationResult.InternalError<Unit>(u.ResultMessage ?? "No command processor registered"),
+            faulted: f => OperationResult.InternalError<Unit>(f.ResultMessage ?? $"Command execution failed with exception: {f.Exception}"),
+            cancelled: c => OperationResult.Cancelled<Unit>(c.ResultMessage));
+        return new(r.CommandId, operationResult, r.ResultMessage);
+    }
+
+    public static void Match(this ProcessingResult processingResult, Action<ProcessingResult.Processed_> processed, Action<ProcessingResult.Unhandled_> unhandled, Action<ProcessingResult.Faulted_> faulted, Action<ProcessingResult.Cancelled_> cancelled)
+    {
+        static Func<T, int> ToFunc<T>(Action<T> action) => t => { action(t); return 42; };
+
+        processingResult.Match(
+            processed: p => ToFunc(processed)(p),
+            unhandled: u => ToFunc(unhandled)(u),
+            faulted: f => ToFunc(faulted)(f),
+            cancelled: c => ToFunc(cancelled)(c));
+    }
 }

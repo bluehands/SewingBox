@@ -1,4 +1,6 @@
 ﻿using System.Collections.Immutable;
+using FunicularSwitch.Extensions;
+using FunicularSwitch.Generators;
 
 namespace EventSourcing;
 
@@ -55,6 +57,13 @@ public abstract class SynchronousCommandProcessor<T> : CommandProcessor<T> where
 		Task.FromResult(InternalProcessSync(command));
 
 	public abstract ProcessingResult.Processed_ InternalProcessSync(T command);
+}
+
+public record NoOp : Command;
+
+public class NoOpCommandProcessor : CommandProcessor<NoOp>
+{
+	public override Task<ProcessingResult.Processed_> InternalProcess(NoOp command) => Task.FromResult(command.ToEmptyProcessingResult("No operation"));
 }
 
 [FunicularSwitch.Generators.UnionType]
@@ -190,6 +199,7 @@ public abstract class Failure
 	public static Failure Conflict(string message) => new Conflict_(message);
 	public static Failure Internal(string message) => new Internal_(message);
 	public static Failure InvalidInput(string message) => new InvalidInput_(message);
+	public static Failure Multiple(IReadOnlyCollection<Failure> failures) => new Multiple_(failures);
 	public static Failure Cancelled(string? message = null) => new Cancelled_(message);
 
 	public string Message { get; }
@@ -229,6 +239,13 @@ public abstract class Failure
 		}
 	}
 
+	public class Multiple_ : Failure
+	{
+		public IReadOnlyCollection<Failure> Failures { get; }
+
+		public Multiple_(IReadOnlyCollection<Failure> failures) : base(UnionCases.Multiple, string.Join(Environment.NewLine, failures.Select(f => f.Message))) => Failures = failures;
+	}
+
 	public class Cancelled_ : Failure
 	{
 		public Cancelled_(string? message = null) : base(UnionCases.Cancelled, message ?? "Operation cancelled")
@@ -243,6 +260,7 @@ public abstract class Failure
 		Conflict,
 		Internal,
 		InvalidInput,
+		Multiple,
 		Cancelled
 	}
 
@@ -253,7 +271,8 @@ public abstract class Failure
 		Message = message;
 	}
 
-	public override string ToString() => Enum.GetName(typeof(UnionCases), UnionCase) ?? UnionCase.ToString();
+	public override string ToString() => $"{Enum.GetName(typeof(UnionCases), UnionCase) ?? UnionCase.ToString()}: {Message}";
+
 	bool Equals(Failure other) => UnionCase == other.UnionCase;
 
 	public override bool Equals(object? obj)
@@ -265,4 +284,69 @@ public abstract class Failure
 	}
 
 	public override int GetHashCode() => (int)UnionCase;
+}
+
+public static partial class OperationResultExtension
+{
+	public static ProcessingResult.Processed_ ToProcessedResult<T>(this OperationResult<T> operationResult, Command command, string? successMessage = null) where T : EventPayload
+		=> operationResult.ToProcessedResult(command, successMessage != null ? _ => successMessage : null);
+
+	public static ProcessingResult.Processed_
+		ToProcessedResult<T>(this OperationResult<T> operationResult, Command command, Func<T, string?>? successMessage) where T : EventPayload
+		=> operationResult
+			.Match(
+				ok => command.ToProcessedResult(ok, FunctionalResult.Ok(successMessage?.Invoke(ok) ?? $"Successfully processed command {command}")),
+				failure => command.ToFailureResult(failure, failure.Message)
+			);
+
+	public static ProcessingResult.Processed_
+		ToProcessedResult<T>(this OperationResult<IReadOnlyCollection<T>> operationResult, Command command, Func<IReadOnlyCollection<T>, string>? successMessage = null) where T : EventPayload
+		=> operationResult
+			.Match(
+				ok => command.ToProcessedResult(ok, FunctionalResult.Ok(successMessage?.Invoke(ok) ?? $"Successfully processed command {command}")),
+				failure => command.ToFailureResult(failure, failure.Message)
+			);
+}
+
+public static class CommandExtension
+{
+	public static ProcessingResult.Processed_ ToFailureResult(this Command command, Failure failure, string resultMessage)
+		=> command.ToEmptyProcessingResult(resultMessage, FunctionalResult.Failed(failure));
+
+	public static ProcessingResult.Processed_ ToNotFoundResult(this Command command, string resultMessage)
+		=> command.ToFailureResult(Failure.NotFound(resultMessage), resultMessage);
+
+	public static ProcessingResult.Processed_ ToForbiddenResult(this Command command, string resultMessage)
+		=> command.ToFailureResult(Failure.Forbidden(resultMessage), resultMessage);
+
+	public static ProcessingResult.Processed_ ToConflictResult(this Command command, string resultMessage)
+		=> command.ToFailureResult(Failure.Conflict(resultMessage), resultMessage);
+
+	public static ProcessingResult.Processed_ ToEmptyProcessingResult(this Command command, string resultMessage, FunctionalResult? functionalResult = null)
+		=> command.ToProcessedResult(Enumerable.Empty<EventPayload>(), functionalResult ?? FunctionalResult.Ok(resultMessage));
+
+	public static ProcessingResult.Processed_ ToProcessedResult(this Command command, EventPayload resultEvent, FunctionalResult functionalResult)
+		=> command.ToProcessedResult(new[] { resultEvent }, functionalResult);
+
+	public static ProcessingResult.Processed_ ToProcessedResult(this Command command,
+		IEnumerable<EventPayload> resultEvents, FunctionalResult functionalResult) =>
+		new(resultEvents, command.Id, functionalResult);
+}
+
+public static partial class FailureExtension
+{
+	[MergeError]
+	public static Failure Merge(this Failure failure, Failure other)
+	{
+		var failures =
+			failure is Failure.Multiple_ m
+				? other is Failure.Multiple_ mo
+					? m.Failures.Concat(mo.Failures)
+					: m.Failures.Concat(other.Yield())
+				: other is Failure.Multiple_ mo2
+					? mo2.Failures.Concat(failure)
+					: new[] { failure, other };
+
+		return Failure.Multiple(failures.ToImmutableArray());
+	}
 }
