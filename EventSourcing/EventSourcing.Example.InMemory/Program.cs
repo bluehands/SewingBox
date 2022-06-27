@@ -1,5 +1,8 @@
 ﻿using EventSourcing;
 using EventSourcing.Example.Domain;
+using EventSourcing.Example.Domain.Commands;
+using EventSourcing.Example.Domain.Events;
+using EventSourcing.Example.Domain.Projections;
 using EventSourcing.Persistence.InMemory;
 using FunicularSwitch;
 using FunicularSwitch.Extensions;
