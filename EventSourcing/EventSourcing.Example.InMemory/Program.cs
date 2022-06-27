@@ -26,9 +26,10 @@ host.Services.GetRequiredService<Accounts>().AppliedEventStream.Subscribe(t =>
 	Console.WriteLine($"Balance of {t.projection.Owner}s account changed: {t.projection.Balance}"));
 host.Services.UseEventSourcing();
 
-var output = await host.Services.GetRequiredService<SampleApp>().CreateAccountsAndTransferMoney()
+var output = await host.Services.GetRequiredService<SampleApp>()
+	.CreateAccountsAndTransferMoney()
 	.Match(
-		ok => "Money tranferred",
+		ok => "Money transferred",
 		error => $"Something went wrong: {error}"
 	);
 Console.WriteLine(output);
@@ -37,13 +38,11 @@ Console.ReadKey();
 
 class SampleApp
 {
-	readonly Func<Command, Task<OperationResult<FunicularSwitch.Unit>>> _executeCommandAndWait;
-	readonly ExecuteCommand _executeCommand;
+	readonly Func<Command, Task<OperationResult<Unit>>> _executeCommandAndWait;
 
-	public SampleApp(Accounts accounts, ExecuteCommand executeCommand, ExecuteCommandAndWaitUntilApplied executeCommandAndWait)
+	public SampleApp(Accounts accounts, ExecuteCommandAndWaitUntilApplied executeCommandAndWait)
 	{
 		_executeCommandAndWait = command => executeCommandAndWait(command, accounts.CommandProcessedStream);
-		_executeCommand = executeCommand;
 	}
 
 	public async Task<OperationResult<Unit>> CreateAccountsAndTransferMoney()
