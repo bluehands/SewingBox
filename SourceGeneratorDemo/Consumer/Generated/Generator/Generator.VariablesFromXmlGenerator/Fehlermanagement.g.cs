@@ -13,91 +13,176 @@ namespace WorkflowInteraction
 {
     public static partial class WorkflowVariables
     {
-        public const string Abstellmassnahme = "Abstellmassnahme";
-        public const string AchtDBerichtErforderlich = "AchtDBerichtErforderlich";
-        public const string AktuellerStandort = "AktuellerStandort";
+        public const string Abstellmassnahme =
+            "Abstellmassnahme";
+        public const string AchtDBerichtErforderlich =
+            "AchtDBerichtErforderlich";
+        public const string AktuellerStandort =
+            "AktuellerStandort";
         public const string Anlagen = "Anlagen";
-        public const string AnsprechpartnerBeiKunde = "AnsprechpartnerBeiKunde";
-        public const string AntwortNCRBemerkung = "AntwortNCRBemerkung";
-        public const string AntwortNCRKundeLehntAb = "AntwortNCRKundeLehntAb";
-        public const string AntwortNCRNacharbeitBeiUns = "AntwortNCRNacharbeitBeiUns";
-        public const string AntwortNCRUeberarbeiten = "AntwortNCRUeberarbeiten";
-        public const string AnzahlAbweichenderBauteile = "AnzahlAbweichenderBauteile";
-        public const string AnzahlFehlerteile = "AnzahlFehlerteile";
-        public const string AnzahlReklamierterBauteile = "AnzahlReklamierterBauteile";
-        public const string ArtDerAbweichung = "ArtDerAbweichung";
-        public const string ArtDesFehlers = "ArtDesFehlers";
-        public const string Auftrag_Bestellmenge = "Auftrag_Bestellmenge";
-        public const string Auftrag_Produktbezeichnung = "Auftrag_Produktbezeichnung";
-        public const string Auftrag_Werkstoffbezeichnung = "Auftrag_Werkstoffbezeichnung";
-        public const string Auftrag_Werkstoffnummer = "Auftrag_Werkstoffnummer";
-        public const string BemerkungenIntern = "BemerkungenIntern";
-        public const string BeschreibungDerAbweichung = "BeschreibungDerAbweichung";
-        public const string BeschreibungDerReklamation = "BeschreibungDerReklamation";
-        public const string BestellPosition = "BestellPosition";
-        public const string BetroffeneBauteilemarkiert = "BetroffeneBauteilemarkiert";
-        public const string BetroffenerMitarbeiter = "BetroffenerMitarbeiter";
-        public const string EklatanterVormaterialfehler = "EklatanterVormaterialfehler";
-        public const string EklatanterVormaterialfehlerBemerkung = "EklatanterVormaterialfehlerBemerkung";
-        public const string ErfolgtUntersuchung = "ErfolgtUntersuchung";
-        public const string ErgebnisDerReklamation = "ErgebnisDerReklamation";
-        public const string ErsatzkarteBemerkung = "ErsatzkarteBemerkung";
-        public const string ErsatzkarteErforderlich = "ErsatzkarteErforderlich";
-        public const string Fehlerbeschreibung = "Fehlerbeschreibung";
-        public const string Fehlerkategorie = "Fehlerkategorie";
-        public const string Fehlerkosten = "Fehlerkosten";
-        public const string FehlermeldungFreigegeben = "FehlermeldungFreigegeben";
-        public const string FehlermeldungFreigegebenLeitung = "FehlermeldungFreigegebenLeitung";
-        public const string Fehlerort = "Fehlerort";
-        public const string Fehlerursache = "Fehlerursache";
-        public const string FehlerursacheUnklar = "FehlerursacheUnklar";
-        public const string IstAusfuehrlicherNCR = "IstAusfuehrlicherNCR";
-        public const string KostenkalkulationBemerkung = "KostenkalkulationBemerkung";
-        public const string Kundenentscheidung = "Kundenentscheidung";
-        public const string KundenRueckspracheBemerkung = "KundenRueckspracheBemerkung";
-        public const string LieferantenangebotBemerkung = "LieferantenangebotBemerkung";
-        public const string MaterialPassend = "MaterialPassend";
-        public const string MeldungAnKundeBemerkung = "MeldungAnKundeBemerkung";
-        public const string Moeglicher10Cfr21 = "Moeglicher10Cfr21";
-        public const string NacharbeitErforderlich = "NacharbeitErforderlich";
-        public const string NacharbeitMoeglich = "NacharbeitMoeglich";
-        public const string NacharbeitMoeglichBemerkung = "NacharbeitMoeglichBemerkung";
-        public const string NacharbeitOk = "NacharbeitOk";
-        public const string NCRErstellenAnalyseNotwendig = "NCRErstellenAnalyseNotwendig";
-        public const string NCRErstellenBemerkung = "NCRErstellenBemerkung";
-        public const string NCRKundeStorno = "NCRKundeStorno";
-        public const string NCRKundeStornoBemerkung = "NCRKundeStornoBemerkung";
-        public const string NummerUntersuchung = "NummerUntersuchung";
-        public const string PlausibilitaetspruefungBemerkung = "PlausibilitaetspruefungBemerkung";
-        public const string ReklamationBerechtigt = "ReklamationBerechtigt";
-        public const string ReklamationBerechtigtBemerkung = "ReklamationBerechtigtBemerkung";
-        public const string ReklamationErsatzErforderlich = "ReklamationErsatzErforderlich";
-        public const string ReklamationNachvollziehbarBearbeitung = "ReklamationNachvollziehbarBearbeitung";
-        public const string ReklamationsAktion = "ReklamationsAktion";
-        public const string ReklamationSinnvoll = "ReklamationSinnvoll";
-        public const string ReklamationSinnvollBemerkung = "ReklamationSinnvollBemerkung";
-        public const string ReklamationStorno = "ReklamationStorno";
-        public const string ReklamationStornoBemerkung = "ReklamationStornoBemerkung";
-        public const string Risikoeinstufung = "Risikoeinstufung";
-        public const string RueckfragenVorhanden = "RueckfragenVorhanden";
-        public const string RueckfragenVorhandenBemerkung = "RueckfragenVorhandenBemerkung";
-        public const string RueckholungBauteilBemerkung = "RueckholungBauteilBemerkung";
-        public const string RueckversandBemerkung = "RueckversandBemerkung";
-        public const string SchadensanalyseSinnvoll = "SchadensanalyseSinnvoll";
-        public const string Sofortmassnahme = "Sofortmassnahme";
-        public const string Sonderfertigung = "Sonderfertigung";
-        public const string Ursachenanalyse = "Ursachenanalyse";
-        public const string Verkaufspreis = "Verkaufspreis";
-        public const string VerwendbarkeitFuerAndereAuftraege = "VerwendbarkeitFuerAndereAuftraege";
-        public const string VerwendungBauteile = "VerwendungBauteile";
-        public const string VorgangAbschliessen = "VorgangAbschliessen";
-        public const string Vormaterialfehler = "Vormaterialfehler";
-        public const string VorschlagRosswag = "VorschlagRosswag";
-        public const string WeitereVerwendung = "WeitereVerwendung";
-        public const string WirksamkeitspruefungDerAbstellmassnahme = "WirksamkeitspruefungDerAbstellmassnahme";
-        public const string WirksamkeitspruefungUndAbstellmassnahmen = "WirksamkeitspruefungUndAbstellmassnahmen";
-        public const string ZukaufBeauftragenBemerkung = "ZukaufBeauftragenBemerkung";
-        public const string ZukaufErforderlich = "ZukaufErforderlich";
-        public const string ZusaetzlicheAktionBemerkung = "ZusaetzlicheAktionBemerkung";
+        public const string AnsprechpartnerBeiKunde =
+            "AnsprechpartnerBeiKunde";
+        public const string AntwortNCRBemerkung =
+            "AntwortNCRBemerkung";
+        public const string AntwortNCRKundeLehntAb =
+            "AntwortNCRKundeLehntAb";
+        public const string AntwortNCRNacharbeitBeiUns =
+            "AntwortNCRNacharbeitBeiUns";
+        public const string AntwortNCRUeberarbeiten =
+            "AntwortNCRUeberarbeiten";
+        public const string AnzahlAbweichenderBauteile =
+            "AnzahlAbweichenderBauteile";
+        public const string AnzahlFehlerteile =
+            "AnzahlFehlerteile";
+        public const string AnzahlReklamierterBauteile =
+            "AnzahlReklamierterBauteile";
+        public const string ArtDerAbweichung =
+            "ArtDerAbweichung";
+        public const string ArtDesFehlers =
+            "ArtDesFehlers";
+        public const string Auftrag_Bestellmenge =
+            "Auftrag_Bestellmenge";
+        public const string Auftrag_Produktbezeichnung =
+            "Auftrag_Produktbezeichnung";
+        public const string Auftrag_Werkstoffbezeichnung =
+            "Auftrag_Werkstoffbezeichnung";
+        public const string Auftrag_Werkstoffnummer =
+            "Auftrag_Werkstoffnummer";
+        public const string BemerkungenIntern =
+            "BemerkungenIntern";
+        public const string BeschreibungDerAbweichung =
+            "BeschreibungDerAbweichung";
+        public const string BeschreibungDerReklamation =
+            "BeschreibungDerReklamation";
+        public const string BestellPosition =
+            "BestellPosition";
+        public const string BetroffeneBauteilemarkiert =
+            "BetroffeneBauteilemarkiert";
+        public const string BetroffenerMitarbeiter =
+            "BetroffenerMitarbeiter";
+        public const string EklatanterVormaterialfehler =
+            "EklatanterVormaterialfehler";
+        public const string EklatanterVormaterialfehlerBemerkung =
+            "EklatanterVormaterialfehlerBemerkung";
+        public const string ErfolgtUntersuchung =
+            "ErfolgtUntersuchung";
+        public const string ErgebnisDerReklamation =
+            "ErgebnisDerReklamation";
+        public const string ErsatzkarteBemerkung =
+            "ErsatzkarteBemerkung";
+        public const string ErsatzkarteErforderlich =
+            "ErsatzkarteErforderlich";
+        public const string Fehlerbeschreibung =
+            "Fehlerbeschreibung";
+        public const string Fehlerkategorie =
+            "Fehlerkategorie";
+        public const string Fehlerkosten =
+            "Fehlerkosten";
+        public const string FehlermeldungFreigegeben =
+            "FehlermeldungFreigegeben";
+        public const string FehlermeldungFreigegebenLeitung =
+            "FehlermeldungFreigegebenLeitung";
+        public const string Fehlerort =
+            "Fehlerort";
+        public const string Fehlerursache =
+            "Fehlerursache";
+        public const string FehlerursacheUnklar =
+            "FehlerursacheUnklar";
+        public const string IstAusfuehrlicherNCR =
+            "IstAusfuehrlicherNCR";
+        public const string KostenkalkulationBemerkung =
+            "KostenkalkulationBemerkung";
+        public const string Kundenentscheidung =
+            "Kundenentscheidung";
+        public const string KundenRueckspracheBemerkung =
+            "KundenRueckspracheBemerkung";
+        public const string LieferantenangebotBemerkung =
+            "LieferantenangebotBemerkung";
+        public const string MaterialPassend =
+            "MaterialPassend";
+        public const string MeldungAnKundeBemerkung =
+            "MeldungAnKundeBemerkung";
+        public const string Moeglicher10Cfr21 =
+            "Moeglicher10Cfr21";
+        public const string NacharbeitErforderlich =
+            "NacharbeitErforderlich";
+        public const string NacharbeitMoeglich =
+            "NacharbeitMoeglich";
+        public const string NacharbeitMoeglichBemerkung =
+            "NacharbeitMoeglichBemerkung";
+        public const string NacharbeitOk =
+            "NacharbeitOk";
+        public const string NCRErstellenAnalyseNotwendig =
+            "NCRErstellenAnalyseNotwendig";
+        public const string NCRErstellenBemerkung =
+            "NCRErstellenBemerkung";
+        public const string NCRKundeStorno =
+            "NCRKundeStorno";
+        public const string NCRKundeStornoBemerkung =
+            "NCRKundeStornoBemerkung";
+        public const string NummerUntersuchung =
+            "NummerUntersuchung";
+        public const string PlausibilitaetspruefungBemerkung =
+            "PlausibilitaetspruefungBemerkung";
+        public const string ReklamationBerechtigt =
+            "ReklamationBerechtigt";
+        public const string ReklamationBerechtigtBemerkung =
+            "ReklamationBerechtigtBemerkung";
+        public const string ReklamationErsatzErforderlich =
+            "ReklamationErsatzErforderlich";
+        public const string ReklamationNachvollziehbarBearbeitung =
+            "ReklamationNachvollziehbarBearbeitung";
+        public const string ReklamationsAktion =
+            "ReklamationsAktion";
+        public const string ReklamationSinnvoll =
+            "ReklamationSinnvoll";
+        public const string ReklamationSinnvollBemerkung =
+            "ReklamationSinnvollBemerkung";
+        public const string ReklamationStorno =
+            "ReklamationStorno";
+        public const string ReklamationStornoBemerkung =
+            "ReklamationStornoBemerkung";
+        public const string Risikoeinstufung =
+            "Risikoeinstufung";
+        public const string RueckfragenVorhanden =
+            "RueckfragenVorhanden";
+        public const string RueckfragenVorhandenBemerkung =
+            "RueckfragenVorhandenBemerkung";
+        public const string RueckholungBauteilBemerkung =
+            "RueckholungBauteilBemerkung";
+        public const string RueckversandBemerkung =
+            "RueckversandBemerkung";
+        public const string SchadensanalyseSinnvoll =
+            "SchadensanalyseSinnvoll";
+        public const string Sofortmassnahme =
+            "Sofortmassnahme";
+        public const string Sonderfertigung =
+            "Sonderfertigung";
+        public const string Ursachenanalyse =
+            "Ursachenanalyse";
+        public const string Verkaufspreis =
+            "Verkaufspreis";
+        public const string VerwendbarkeitFuerAndereAuftraege =
+            "VerwendbarkeitFuerAndereAuftraege";
+        public const string VerwendungBauteile =
+            "VerwendungBauteile";
+        public const string VorgangAbschliessen =
+            "VorgangAbschliessen";
+        public const string Vormaterialfehler =
+            "Vormaterialfehler";
+        public const string VorschlagRosswag =
+            "VorschlagRosswag";
+        public const string WeitereVerwendung =
+            "WeitereVerwendung";
+        public const string WirksamkeitspruefungDerAbstellmassnahme =
+            "WirksamkeitspruefungDerAbstellmassnahme";
+        public const string WirksamkeitspruefungUndAbstellmassnahmen =
+            "WirksamkeitspruefungUndAbstellmassnahmen";
+        public const string ZukaufBeauftragenBemerkung =
+            "ZukaufBeauftragenBemerkung";
+        public const string ZukaufErforderlich =
+            "ZukaufErforderlich";
+        public const string ZusaetzlicheAktionBemerkung =
+            "ZusaetzlicheAktionBemerkung";
     }
 }
