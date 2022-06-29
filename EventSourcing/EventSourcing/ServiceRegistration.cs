@@ -1,5 +1,7 @@
 ﻿using System.Collections.Immutable;
 using System.Reflection;
+using EventSourcing.Commands;
+using EventSourcing.Events;
 using EventSourcing.Internals;
 using FunicularSwitch.Extensions;
 using Microsoft.Extensions.DependencyInjection;

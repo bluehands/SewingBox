@@ -3,7 +3,7 @@ using System.Collections.Immutable;
 using System.Linq.Expressions;
 using System.Reflection;
 
-namespace EventSourcing;
+namespace EventSourcing.Events;
 
 public static class EventFactory
 {
@@ -24,10 +24,10 @@ public static class EventFactory
 					versionParam,
 					timestampParam,
 					isFirstOfStreamParam,
-					Expression.Convert(payloadParam, payloadType)), 
-				versionParam, 
-				timestampParam, 
-				isFirstOfStreamParam, 
+					Expression.Convert(payloadParam, payloadType)),
+				versionParam,
+				timestampParam,
+				isFirstOfStreamParam,
 				payloadParam);
 			return (payloadType, factory: expression.Compile());
 		}).ToImmutableDictionary(t => t.payloadType, t => t.factory);

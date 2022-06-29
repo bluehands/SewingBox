@@ -11,6 +11,12 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventSourcing.Example.Domai
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventSourcing.Example.InMemory", "EventSourcing.Example.InMemory\EventSourcing.Example.InMemory.csproj", "{D7C94512-72CA-49F6-99D9-9C651A879540}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventSourcing.Persistence.SqlStreamStore", "EventSourcing.Persistence.SqlStreamStore\EventSourcing.Persistence.SqlStreamStore.csproj", "{2992EE20-A582-40FD-9761-BD25AE818A76}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventSourcing.JsonPayloads", "EventSourcing.JsonPayloads\EventSourcing.JsonPayloads.csproj", "{029135C1-2A50-4129-B2DA-D546D54328CE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventSourcing.Example.JsonPayloads", "EventSourcing.Example.JsonPayloads\EventSourcing.Example.JsonPayloads.csproj", "{A0428F6F-2D0E-4A7B-AE7A-6FD168A2E9BC}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +39,18 @@ Global
 		{D7C94512-72CA-49F6-99D9-9C651A879540}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{D7C94512-72CA-49F6-99D9-9C651A879540}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{D7C94512-72CA-49F6-99D9-9C651A879540}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2992EE20-A582-40FD-9761-BD25AE818A76}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2992EE20-A582-40FD-9761-BD25AE818A76}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2992EE20-A582-40FD-9761-BD25AE818A76}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2992EE20-A582-40FD-9761-BD25AE818A76}.Release|Any CPU.Build.0 = Release|Any CPU
+		{029135C1-2A50-4129-B2DA-D546D54328CE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{029135C1-2A50-4129-B2DA-D546D54328CE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{029135C1-2A50-4129-B2DA-D546D54328CE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{029135C1-2A50-4129-B2DA-D546D54328CE}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A0428F6F-2D0E-4A7B-AE7A-6FD168A2E9BC}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A0428F6F-2D0E-4A7B-AE7A-6FD168A2E9BC}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A0428F6F-2D0E-4A7B-AE7A-6FD168A2E9BC}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A0428F6F-2D0E-4A7B-AE7A-6FD168A2E9BC}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

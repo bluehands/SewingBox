@@ -1,5 +1,7 @@
-﻿using System.Reflection;
+﻿using System.Collections.Immutable;
+using System.Reflection;
 using System.Text;
+using Microsoft.Extensions.Logging;
 
 namespace EventSourcing.Internals;
 

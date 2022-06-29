@@ -1,17 +1,19 @@
-﻿using EventSourcing.Example.Domain.Events;
+﻿using EventSourcing.Commands;
+using EventSourcing.Events;
+using EventSourcing.Example.Domain.Events;
 using EventSourcing.Example.Domain.Projections;
 
 namespace EventSourcing.Example.Domain.Commands;
 
-public record ExecuteTransaction(string FromAccount, string ToAccount, decimal Amount) : Command;
+public record TransferMoney(string FromAccount, string ToAccount, decimal Amount) : Command;
 
-public class ExecuteTransactionCommandProcessor : CommandProcessor<ExecuteTransaction>
+public class TransferMoneyCommandProcessor : CommandProcessor<TransferMoney>
 {
 	readonly Accounts _accounts;
 
-	public ExecuteTransactionCommandProcessor(Accounts accounts) => _accounts = accounts;
+	public TransferMoneyCommandProcessor(Accounts accounts) => _accounts = accounts;
 
-	public override async Task<ProcessingResult.Processed_> InternalProcess(ExecuteTransaction command)
+	public override async Task<ProcessingResult.Processed_> InternalProcess(TransferMoney command)
 	{
 		IEnumerable<Failure> SenderHasEnoughMoney(Account account)
 		{
@@ -27,9 +29,11 @@ public class ExecuteTransactionCommandProcessor : CommandProcessor<ExecuteTransa
 
 		return fromAccount
 			.Aggregate(toAccount, (from, to) => (from, to))
-			.Map(t => (IReadOnlyCollection<EventPayload>)new EventPayload[]
-				{ new PaymentMade(t.from.Id, command.Amount), new PaymentReceived(t.to.Id, command.Amount) })
-			.ToProcessedResult(command,
-				_ => $"Transferred {command.Amount} € from {command.FromAccount} to {command.ToAccount}");
+			.Map(t => new EventPayload[]
+			{
+				new PaymentMade(t.from.Id, command.Amount), 
+				new PaymentReceived(t.to.Id, command.Amount)
+			})
+			.ToProcessedResultMulti(command, _ => $"Transferred {command.Amount} € from {command.FromAccount} to {command.ToAccount}");
 	}
 }

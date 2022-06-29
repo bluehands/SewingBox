@@ -1,4 +1,4 @@
-﻿namespace EventSourcing;
+﻿namespace EventSourcing.Events;
 
 [AttributeUsage(AttributeTargets.Class)]
 public sealed class SerializedEventPayloadAttribute : Attribute

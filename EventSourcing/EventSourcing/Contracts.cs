@@ -1,10 +1,30 @@
-﻿using FunicularSwitch;
+﻿using EventSourcing.Commands;
+using EventSourcing.Events;
+using FunicularSwitch;
 
 namespace EventSourcing;
 
+public interface IEventSerializer<TSerialized>
+{
+	public TSerialized Serialize(object serializablePayload);
+	public object Deserialize(Type serializablePayloadType, TSerialized serializedPayload);
+}
+
+public interface IEventWriter
+{
+	Task WriteEvents(IReadOnlyCollection<EventPayload> payloads);
+}
+
 public delegate Task WriteEvents(IReadOnlyCollection<EventPayload> payloads);
 
-public delegate Task<IEnumerable<Event>> LoadEventsByStreamId(string streamId, long upToVersionExclusive);
+public interface IEventReader
+{
+	Task<IEnumerable<Event>> LoadEventsByStreamId(StreamId streamId, long upToVersionExclusive);
+	Task<IEnumerable<Event>> LoadAllEvents();
+	Task<IReadOnlyList<Event>> ReadEvents(long fromPositionInclusive);
+}
+
+public delegate Task<IEnumerable<Event>> LoadEventsByStreamId(StreamId streamId, long upToVersionExclusive);
 
 public delegate Task<IEnumerable<Event>> LoadAllEvents();
 

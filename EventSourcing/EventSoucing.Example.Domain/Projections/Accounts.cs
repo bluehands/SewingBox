@@ -1,4 +1,6 @@
-﻿using EventSourcing.Example.Domain.Events;
+﻿using EventSourcing.Events;
+using EventSourcing.Example.Domain.Events;
+using EventSourcing.Projections;
 using FunicularSwitch;
 using Microsoft.Extensions.Logging;
 
@@ -12,8 +14,8 @@ public class Accounts : ProjectionCache<Account>
 
 	public Accounts(IObservable<Event> events, LoadEventsByStreamId loadEventsByStreamId, LoadAllEvents loadAllEvents,
 		ILogger<Accounts> logger)
-		: base(NoEvictionCacheCollection<string, Account>.Empty, events, loadEventsByStreamId, loadAllEvents,
-			e => Events.StreamIds.IsAccount(e.StreamId), logger) =>
+		: base(NoEvictionCacheCollection<StreamId, Account>.Empty, events, loadEventsByStreamId, loadAllEvents,
+			e => e.StreamId.StreamType == StreamTypes.Account, logger) =>
 		_logger = logger;
 
 	protected override Option<Account> InternalApply(Option<Account> account, Event @event) => @event.Payload switch

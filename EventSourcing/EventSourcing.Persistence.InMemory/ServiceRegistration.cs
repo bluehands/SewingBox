@@ -4,6 +4,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using EventSourcing.Events;
 using EventSourcing.Internals;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -38,7 +39,7 @@ public class InMemoryEventStore
 			}
 		);
 
-	public Task<IEnumerable<Event>> GetEventUpToVersion(string streamId, long upToVersionExclusive) => _lock.ExecuteGuarded(() => (IEnumerable<Event>)_events.Where(e => e.StreamId == streamId && e.Version < upToVersionExclusive).ToImmutableArray());
+	public Task<IEnumerable<Event>> GetEventUpToVersion(StreamId streamId, long upToVersionExclusive) => _lock.ExecuteGuarded(() => (IEnumerable<Event>)_events.Where(e => e.StreamId == streamId && e.Version < upToVersionExclusive).ToImmutableArray());
 }
 
 public static class ServiceRegistration

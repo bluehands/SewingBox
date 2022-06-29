@@ -1,4 +1,5 @@
-﻿using FunicularSwitch.Generators;
+﻿using EventSourcing.Events;
+using FunicularSwitch.Generators;
 
 namespace EventSourcing.Example.Domain.Events;
 

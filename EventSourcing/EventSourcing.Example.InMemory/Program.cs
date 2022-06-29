@@ -1,23 +1,27 @@
 ﻿using EventSourcing;
-using EventSourcing.Example.Domain;
+using EventSourcing.Commands;
 using EventSourcing.Example.Domain.Commands;
-using EventSourcing.Example.Domain.Events;
 using EventSourcing.Example.Domain.Projections;
-using EventSourcing.Persistence.InMemory;
+using EventSourcing.Example.JsonPayloads;
+using EventSourcing.JsonPayloads;
+using EventSourcing.Persistence.SqlStreamStore;
 using FunicularSwitch;
 using FunicularSwitch.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using AccountCreated = EventSourcing.Example.Domain.Events.AccountCreated;
 
 using var host = Host.CreateDefaultBuilder()
 	.ConfigureServices(serviceCollection =>
 	{
 		var payloadAssemblies = typeof(AccountCreated).Assembly.Yield();
 		var commandProcessorAssemblies = typeof(CreateAccountCommandProcessor).Assembly.Yield();
+		var payloadMapperAssemblies = new []{typeof(AccountCreatedMapper), typeof(CommandProcessedMapper)}.Select(t => t.Assembly);
+
 		serviceCollection
-			.AddEventSourcing(payloadAssemblies, commandProcessorAssemblies)
-			.AddInMemoryEventStore();
+			.AddEventSourcing(payloadAssemblies, commandProcessorAssemblies, payloadMapperAssemblies)
+			.AddSqlStreamEventStore();
 
 		serviceCollection.AddSingleton<Accounts>();
 		serviceCollection.AddTransient<SampleApp>();
@@ -41,14 +45,14 @@ Console.ReadKey();
 
 class SampleApp
 {
-	readonly Func<Command, Task<OperationResult<Unit>>> _executeCommandAndWait;
+	readonly Func<Command, Task<EventSourcing.OperationResult<Unit>>> _executeCommandAndWait;
 
 	public SampleApp(Accounts accounts, ExecuteCommandAndWaitUntilApplied executeCommandAndWait)
 	{
 		_executeCommandAndWait = command => executeCommandAndWait(command, accounts.CommandProcessedStream);
 	}
 
-	public async Task<OperationResult<Unit>> CreateAccountsAndTransferMoney()
+	public async Task<EventSourcing.OperationResult<Unit>> CreateAccountsAndTransferMoney()
 	{
 		var myAccount = Guid.NewGuid().ToString();
 		var yourAccount = Guid.NewGuid().ToString();
@@ -58,6 +62,6 @@ class SampleApp
 		);
 		return await results
 			.Aggregate()
-			.Bind(_ => _executeCommandAndWait(new ExecuteTransaction(myAccount, yourAccount, 123)));
+			.Bind(_ => _executeCommandAndWait(new TransferMoney(myAccount, yourAccount, 123)));
 	}
 }

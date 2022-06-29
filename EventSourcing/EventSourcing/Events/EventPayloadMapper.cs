@@ -2,7 +2,7 @@
 using System.Reflection;
 using EventSourcing.Internals;
 
-namespace EventSourcing;
+namespace EventSourcing.Events;
 
 public abstract class EventPayloadMapper<TSerializablePayload, TEventPayload> : EventPayloadMapper
 	where TEventPayload : EventPayload
@@ -43,7 +43,8 @@ public abstract class EventPayloadMapper
 			.Where(t => t.GetConstructors().Any(c => c.GetParameters().Length == 0))
 			.Select(t => new
 			{
-				t, att = t.GetArgumentOfFirstGenericBaseType().GetCustomAttribute<SerializedEventPayloadAttribute>()
+				t,
+				att = t.GetArgumentOfFirstGenericBaseType().GetCustomAttribute<SerializedEventPayloadAttribute>()
 			})
 			.Where(_ =>
 			{

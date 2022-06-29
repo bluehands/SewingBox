@@ -1,21 +1,44 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <OutputType>Exe</OutputType>
-    <TargetFramework>net6.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net6.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
 
-  <ItemGroup>
-    <PackageReference Include="FunicularSwitch" Version="3.0.6" />
-    <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
-  </ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="FunicularSwitch" Version="3.0.6" />
+		<PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
+	</ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\EventSoucing.Example.Domain\EventSourcing.Example.Domain.csproj" />
-    <ProjectReference Include="..\EventSourcing.Persistence.InMemory\EventSourcing.Persistence.InMemory.csproj" />
-    <ProjectReference Include="..\EventSourcing\EventSourcing.csproj" />
-  </ItemGroup>
+	<ItemGroup>
+		<ProjectReference Include="..\EventSoucing.Example.Domain\EventSourcing.Example.Domain.csproj" />
+		<ProjectReference Include="..\EventSourcing.Example.JsonPayloads\EventSourcing.Example.JsonPayloads.csproj" />
+		<ProjectReference Include="..\EventSourcing.JsonPayloads\EventSourcing.JsonPayloads.csproj" />
+		<ProjectReference Include="..\EventSourcing.Persistence.InMemory\EventSourcing.Persistence.InMemory.csproj" />
+		<ProjectReference Include="..\EventSourcing.Persistence.SqlStreamStore\EventSourcing.Persistence.SqlStreamStore.csproj" />
+		<ProjectReference Include="..\EventSourcing\EventSourcing.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Folder Include="PersistedEvents\" />
+	</ItemGroup>
+
+	<PropertyGroup>
+		<EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+		<CompilerGeneratedFilesOutputPath>Generated</CompilerGeneratedFilesOutputPath>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<!-- Don't include the output from a previous source generator execution into future runs; the */** trick here ensures that there's
+  at least one subdirectory, which is our key that it's coming from a source generator as opposed to something that is coming from
+  some other tool. -->
+		<Compile Remove="$(CompilerGeneratedFilesOutputPath)/*/**/*.cs" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Generator\Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+	</ItemGroup>
 
 </Project>

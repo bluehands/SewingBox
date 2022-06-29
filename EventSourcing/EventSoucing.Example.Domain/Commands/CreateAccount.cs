@@ -1,4 +1,5 @@
-﻿using EventSourcing.Example.Domain.Events;
+﻿using EventSourcing.Commands;
+using EventSourcing.Example.Domain.Events;
 
 namespace EventSourcing.Example.Domain.Commands;
 

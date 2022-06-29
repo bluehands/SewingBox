@@ -1,8 +1,9 @@
 ﻿using System.Collections.Immutable;
+using EventSourcing.Events;
 using FunicularSwitch.Extensions;
 using FunicularSwitch.Generators;
 
-namespace EventSourcing;
+namespace EventSourcing.Commands;
 
 public delegate CommandProcessor? GetCommandProcessor(Type commandType);
 
@@ -191,7 +192,7 @@ public abstract class FunctionalResult
 	public override int GetHashCode() => (int)UnionCase;
 }
 
-[FunicularSwitch.Generators.UnionType]
+[UnionType]
 public abstract class Failure
 {
 	public static Failure Forbidden(string message) => new Forbidden_(message);
@@ -300,7 +301,7 @@ public static partial class OperationResultExtension
 			);
 
 	public static ProcessingResult.Processed_
-		ToProcessedResult<T>(this OperationResult<IReadOnlyCollection<T>> operationResult, Command command, Func<IReadOnlyCollection<T>, string>? successMessage = null) where T : EventPayload
+		ToProcessedResultMulti<TCollection>(this OperationResult<TCollection> operationResult, Command command, Func<TCollection, string>? successMessage = null) where TCollection : IEnumerable<EventPayload>
 		=> operationResult
 			.Match(
 				ok => command.ToProcessedResult(ok, FunctionalResult.Ok(successMessage?.Invoke(ok) ?? $"Successfully processed command {command}")),

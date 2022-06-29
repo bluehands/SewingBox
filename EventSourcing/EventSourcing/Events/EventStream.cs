@@ -5,7 +5,7 @@ using System.Reactive.Subjects;
 using EventSourcing.Internals;
 using Microsoft.Extensions.Logging;
 
-namespace EventSourcing;
+namespace EventSourcing.Events;
 
 public sealed class EventStream<T> : IDisposable, IObservable<T>
 {
@@ -62,7 +62,7 @@ public static class EventStream
 
 				logger?.LogInformation($"Publishing event range: {getEventNr(sourceEvents[0])} - {getEventNr(sourceEvents[sourceEvents.Count - 1])}");
 				return events;
-			}, logger , 1)
+			}, logger, 1)
 			.SelectMany(_ => _);
 
 		return Create(stream);
