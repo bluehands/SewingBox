@@ -1,12 +1,13 @@
 ﻿using EventSourcing.Events;
+using EventTypes = Example.Domain.Events.EventTypes;
 
-namespace EventSourcing.Example.JsonPayloads;
+namespace Example.JsonPayloads;
 
-[SerializedEventPayload(Domain.Events.EventTypes.AccountCreated)]
+[SerializedEventPayload(EventTypes.AccountCreated)]
 public record AccountCreated(string AccountId, string Owner, decimal InitialBalance);
-[SerializedEventPayload(Domain.Events.EventTypes.PaymentReceived)]
+[SerializedEventPayload(EventTypes.PaymentReceived)]
 public record PaymentReceived(string AccountId, decimal Amount);
-[SerializedEventPayload(Domain.Events.EventTypes.PaymentMade)]
+[SerializedEventPayload(EventTypes.PaymentMade)]
 public record PaymentMade(string AccountId, decimal Amount);
 
 public class AccountCreatedMapper : EventPayloadMapper<AccountCreated, Domain.Events.AccountCreated>

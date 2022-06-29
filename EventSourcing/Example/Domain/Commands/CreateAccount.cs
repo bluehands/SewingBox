@@ -1,7 +1,7 @@
 ﻿using EventSourcing.Commands;
-using EventSourcing.Example.Domain.Events;
+using Example.Domain.Events;
 
-namespace EventSourcing.Example.Domain.Commands;
+namespace Example.Domain.Commands;
 
 public record CreateAccount(string AccountId, string Owner, decimal InitialBalance) : Command;
 

@@ -1,4 +1,6 @@
-﻿namespace EventSourcing.Example.Domain;
+﻿using EventSourcing;
+
+namespace Example.Domain;
 
 public static class OperationResultExtension
 {

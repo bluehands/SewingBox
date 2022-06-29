@@ -1,4 +1,4 @@
-﻿namespace EventSourcing.Example.Domain.Events;
+﻿namespace Example.Domain.Events;
 
 public static class StreamTypes
 {

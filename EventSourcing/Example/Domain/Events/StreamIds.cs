@@ -1,6 +1,6 @@
 ﻿using EventSourcing.Events;
 
-namespace EventSourcing.Example.Domain.Events;
+namespace Example.Domain.Events;
 
 public static class StreamIds
 {

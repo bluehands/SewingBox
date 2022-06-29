@@ -13,16 +13,12 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\EventSoucing.Example.Domain\EventSourcing.Example.Domain.csproj" />
-		<ProjectReference Include="..\EventSourcing.Example.JsonPayloads\EventSourcing.Example.JsonPayloads.csproj" />
-		<ProjectReference Include="..\EventSourcing.JsonPayloads\EventSourcing.JsonPayloads.csproj" />
-		<ProjectReference Include="..\EventSourcing.Persistence.InMemory\EventSourcing.Persistence.InMemory.csproj" />
-		<ProjectReference Include="..\EventSourcing.Persistence.SqlStreamStore\EventSourcing.Persistence.SqlStreamStore.csproj" />
-		<ProjectReference Include="..\EventSourcing\EventSourcing.csproj" />
-	</ItemGroup>
-
-	<ItemGroup>
-		<Folder Include="PersistedEvents\" />
+		<ProjectReference Include="..\Domain\Example.Domain.csproj" />
+		<ProjectReference Include="..\..\EventSourcing.JsonPayloads\EventSourcing.JsonPayloads.csproj" />
+		<ProjectReference Include="..\..\EventSourcing.Persistence.InMemory\EventSourcing.Persistence.InMemory.csproj" />
+		<ProjectReference Include="..\..\EventSourcing.Persistence.SqlStreamStore\EventSourcing.Persistence.SqlStreamStore.csproj" />
+		<ProjectReference Include="..\..\EventSourcing\EventSourcing.csproj" />
+		<ProjectReference Include="..\JsonPayloads\Example.JsonPayloads.csproj" />
 	</ItemGroup>
 
 	<PropertyGroup>
@@ -35,5 +31,8 @@
   at least one subdirectory, which is our key that it's coming from a source generator as opposed to something that is coming from
   some other tool. -->
 		<Compile Remove="$(CompilerGeneratedFilesOutputPath)/*/**/*.cs" />
+		<Compile Remove="PersistedEvents\**" />
+		<EmbeddedResource Remove="PersistedEvents\**" />
+		<None Remove="PersistedEvents\**" />
 	</ItemGroup>
 </Project>

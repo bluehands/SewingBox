@@ -1,10 +1,11 @@
-﻿using EventSourcing.Events;
-using EventSourcing.Example.Domain.Events;
+﻿using EventSourcing;
+using EventSourcing.Events;
 using EventSourcing.Projections;
+using Example.Domain.Events;
 using FunicularSwitch;
 using Microsoft.Extensions.Logging;
 
-namespace EventSourcing.Example.Domain.Projections;
+namespace Example.Domain.Projections;
 
 public record Account(string Id, string Owner, decimal Balance);
 
@@ -23,8 +24,8 @@ public class Accounts : ProjectionCache<Account>
 		AccountPayload accountPayload => accountPayload.Match(
 			accountCreated: accountCreated =>
 				new Account(accountCreated.AccountId, accountCreated.Owner, accountCreated.InitialBalance),
-			paymentReceived: paymentReceived => ApplyIfExists(account, paymentReceived,
-				a => a with { Balance = a.Balance + paymentReceived.Amount }),
+			paymentReceived: paymentReceived => 
+				ApplyIfExists(account, paymentReceived, a => a with { Balance = a.Balance + paymentReceived.Amount }),
 			paymentMade: paymentMade =>
 				ApplyIfExists(account, paymentMade, a => a with { Balance = a.Balance - paymentMade.Amount })
 		),

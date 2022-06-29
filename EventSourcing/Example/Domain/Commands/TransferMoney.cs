@@ -1,9 +1,11 @@
-﻿using EventSourcing.Commands;
+﻿using EventSourcing;
+using EventSourcing.Commands;
 using EventSourcing.Events;
-using EventSourcing.Example.Domain.Events;
-using EventSourcing.Example.Domain.Projections;
+using Example.Domain.Events;
+using Example.Domain.Projections;
+using StreamIds = Example.Domain.Events.StreamIds;
 
-namespace EventSourcing.Example.Domain.Commands;
+namespace Example.Domain.Commands;
 
 public record TransferMoney(string FromAccount, string ToAccount, decimal Amount) : Command;
 
@@ -21,10 +23,10 @@ public class TransferMoneyCommandProcessor : CommandProcessor<TransferMoney>
 				yield return Failure.InvalidInput("Sender does not have enough money");
 		}
 
-		var fromAccount = (await _accounts.Get(Events.StreamIds.Account(command.FromAccount)))
+		var fromAccount = (await _accounts.Get(StreamIds.Account(command.FromAccount)))
 			.ToResult(() => $"Source account {command.FromAccount} does not exist")
 			.Bind(fromAccount => fromAccount.Validate(SenderHasEnoughMoney));
-		var toAccount = (await _accounts.Get(Events.StreamIds.Account(command.ToAccount)))
+		var toAccount = (await _accounts.Get(StreamIds.Account(command.ToAccount)))
 			.ToResult(() => $"Target account {command.FromAccount} does not exist");
 
 		return fromAccount

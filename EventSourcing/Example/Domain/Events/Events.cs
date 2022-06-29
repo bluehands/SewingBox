@@ -1,7 +1,7 @@
 ﻿using EventSourcing.Events;
 using FunicularSwitch.Generators;
 
-namespace EventSourcing.Example.Domain.Events;
+namespace Example.Domain.Events;
 
 [UnionType]
 public abstract record AccountPayload(string AccountId, string EventType) : EventPayload(StreamIds.Account(AccountId), EventType);
