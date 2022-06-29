@@ -20,7 +20,7 @@ public class VariablesFromXmlGenerator : IIncrementalGenerator
 		context.RegisterSourceOutput(compilationAndFiles, (productionContext, sourceContext) => Generate(productionContext, sourceContext));
 	}
 
-	void Generate(SourceProductionContext productionContext, (Compilation compilation, ImmutableArray<(string filename, string content)> files) compilationAndFiles)
+	static void Generate(SourceProductionContext productionContext, (Compilation compilation, ImmutableArray<(string filename, string content)> files) compilationAndFiles)
 	{
 #if DEBUG
 		if (!Debugger.IsAttached)
