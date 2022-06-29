@@ -31,8 +31,8 @@ public static class ServiceCollectionExtension
 		return services
 			.AddSingleton<IObservable<Event>>(provider => provider.GetRequiredService<EventStream<Event>>())
 			.AddSingleton<WriteEvents>(serviceProvider => payloads => serviceProvider.GetRequiredService<IEventWriter>().WriteEvents(payloads))
-			.AddSingleton<LoadAllEvents>(serviceProvider => () => serviceProvider.GetRequiredService<IEventReader>().LoadAllEvents())
-			.AddSingleton<LoadEventsByStreamId>(serviceProvider => (streamId, upToVersionExclusive) => serviceProvider.GetRequiredService<IEventReader>().LoadEventsByStreamId(streamId, upToVersionExclusive));
+			.AddSingleton<LoadAllEvents>(serviceProvider => () => serviceProvider.GetRequiredService<IEventReader>().ReadEvents())
+			.AddSingleton<LoadEventsByStreamId>(serviceProvider => (streamId, upToVersionExclusive) => serviceProvider.GetRequiredService<IEventReader>().ReadEvents(streamId, upToVersionExclusive));
 	}
 
 	public static IServiceCollection AddEventSourcing(this IServiceCollection serviceCollection,

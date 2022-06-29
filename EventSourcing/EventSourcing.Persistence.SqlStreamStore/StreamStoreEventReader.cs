@@ -21,7 +21,7 @@ class StreamStoreEventReader : IEventReader
 		_eventSerializer = eventSerializer;
 	}
 
-	public async Task<IEnumerable<Event>> LoadEventsByStreamId(Events.StreamId streamId, long upToVersionExclusive)
+	public async Task<IEnumerable<Event>> ReadEvents(Events.StreamId streamId, long upToVersionExclusive)
 	{
 		var allForStream = await _eventStore
 			.ReadStreamForwards(IdTranslation.ToStreamStoreStreamId(streamId), StreamVersion.Start, int.MaxValue)
@@ -33,7 +33,7 @@ class StreamStoreEventReader : IEventReader
 			.ConfigureAwait(false);
 	}
 
-	public Task<IEnumerable<Event>> LoadAllEvents() => throw new NotImplementedException();
+	public Task<IEnumerable<Event>> ReadEvents() => throw new NotImplementedException();
 
 	public async Task<IReadOnlyList<Event>> ReadEvents(long fromPositionInclusive)
 	{

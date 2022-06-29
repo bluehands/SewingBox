@@ -13,7 +13,7 @@ public record EventStoreOptions(Func<IServiceProvider, IStreamStore> CreateStore
 
 public static class ServiceRegistration
 {
-	public static void AddSqlStreamEventStore(this IServiceCollection services, EventStoreOptions options = null)
+	public static IServiceCollection AddSqlStreamEventStore(this IServiceCollection services, EventStoreOptions options = null)
 	{
 		options ??= new(
 			CreateStore: _ => new InMemoryStreamStore(),
@@ -26,6 +26,7 @@ public static class ServiceRegistration
 		services.AddTransient<StreamStoreEventReader>();
 
 		services.AddEventSourcing(new StreamStoreServices(), options);
+		return services;
 	}
 
 	class StreamStoreServices : IEventStoreServiceRegistration<EventStoreOptions>

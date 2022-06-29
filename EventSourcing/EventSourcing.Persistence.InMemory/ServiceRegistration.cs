@@ -6,23 +6,25 @@ using System.Threading;
 using System.Threading.Tasks;
 using EventSourcing.Events;
 using EventSourcing.Internals;
+using FunicularSwitch;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
 namespace EventSourcing.Persistence.InMemory;
 
-public class InMemoryEventStore
+public class InMemoryEventStore : IEventReader, IEventWriter
 {
 	readonly List<Event> _events = new();
 	readonly SemaphoreSlim _lock = new(1);
 
 	public long MaxEventNumber => _events[_events.Count - 1].Version;
 
-	public Task<IReadOnlyList<Event>> GetAllEvents() => _lock.ExecuteGuarded(() => (IReadOnlyList<Event>)_events.ToImmutableList());
+	public Task<IEnumerable<Event>> ReadEvents() => _lock.ExecuteGuarded(() => (IEnumerable<Event>)_events.ToImmutableArray());
 
-	public Task<IReadOnlyList<Event>> GetNewerEvents(long versionExclusive) =>
+	public Task<IReadOnlyList<Event>> ReadEvents(long fromPositionInclusive) =>
 		_lock.ExecuteGuarded(() =>
 			{
+				var versionExclusive = fromPositionInclusive + 1;
 				if (_events.Count <= versionExclusive)
 					return (IReadOnlyList<Event>)ImmutableList<Event>.Empty;
 				var readOnlyList = _events.GetRange((int)versionExclusive, (int)(_events.Count - versionExclusive))
@@ -31,46 +33,54 @@ public class InMemoryEventStore
 			}
 		);
 
-	public Task Add(IReadOnlyCollection<EventPayload> eventPayloads) =>
+	public Task<IEnumerable<Event>> ReadEvents(StreamId streamId, long upToVersionExclusive) => _lock.ExecuteGuarded(() => (IEnumerable<Event>)_events.Where(e => e.StreamId == streamId && e.Version < upToVersionExclusive).ToImmutableArray());
+
+	public Task WriteEvents(IReadOnlyCollection<EventPayload> eventPayloads) =>
 		_lock.ExecuteGuarded(() =>
 			{
 				var eventsCount = _events.Count + 1;
 				_events.AddRange(eventPayloads.Select((e, i) => EventFactory.EventFromPayload(e, eventsCount + i, DateTime.UtcNow, false)));
 			}
 		);
-
-	public Task<IEnumerable<Event>> GetEventUpToVersion(StreamId streamId, long upToVersionExclusive) => _lock.ExecuteGuarded(() => (IEnumerable<Event>)_events.Where(e => e.StreamId == streamId && e.Version < upToVersionExclusive).ToImmutableArray());
 }
 
 public static class ServiceRegistration
 {
-	public static void AddInMemoryEventStore(this IServiceCollection services)
+	public static IServiceCollection AddInMemoryEventStore(this IServiceCollection services)
 	{
 		services.AddSingleton<InMemoryEventStore>();
 
-		services.AddSingleton(provider =>
-			{
-				var inMemoryEventStore = provider.GetRequiredService<InMemoryEventStore>();
-				return EventStream.CreateWithPolling(
-					getLastProcessedEventNr: () => Task.FromResult(0L),
-					getEventNr: e => e.Version,
-					getOrderedNewEvents: versionExclusive => inMemoryEventStore.GetNewerEvents(versionExclusive),
-					pollInterval: TimeSpan.FromMilliseconds(100),
-					getEvents: Task.FromResult,
-					provider.GetService<ILogger<Event>>());
-			});
+		services.AddEventSourcing(new EventStoreServices(), No.Thing);
 
-		services.AddSingleton<IObservable<Event>>(provider => provider.GetRequiredService<EventStream<Event>>());
+		return services;
+	}
 
+	class EventStoreServices : IEventStoreServiceRegistration<Unit>
+	{
+		public EventStream<Event> BuildEventStream(IServiceProvider provider, Unit options)
+		{
+			var inMemoryEventStore = provider.GetRequiredService<InMemoryEventStore>();
+			return EventStream.CreateWithPolling(
+				getLastProcessedEventNr: () => Task.FromResult(0L),
+				getEventNr: e => e.Version,
+				getOrderedNewEvents: versionExclusive => inMemoryEventStore.ReadEvents(versionExclusive),
+				pollInterval: TimeSpan.FromMilliseconds(100),
+				getEvents: Task.FromResult,
+				provider.GetService<ILogger<Event>>());
+		}
 
-		services.AddSingleton<WriteEvents>(provider =>
-			payloads => provider.GetRequiredService<InMemoryEventStore>().Add(payloads));
+		public void AddEventReader(IServiceCollection services, Unit options)
+		{
+			services.AddTransient<IEventReader>(provider => provider.GetRequiredService<InMemoryEventStore>());
+		}
 
-		services.AddSingleton<LoadAllEvents>(serviceProvider =>
-			async () => await serviceProvider.GetRequiredService<InMemoryEventStore>().GetAllEvents());
+		public void AddEventWriter(IServiceCollection services, Unit options)
+		{
+			services.AddTransient<IEventWriter>(provider => provider.GetRequiredService<InMemoryEventStore>());
+		}
 
-		services.AddSingleton<LoadEventsByStreamId>(serviceProvider => 
-			(streamId, upToVersionExclusive) => serviceProvider.GetRequiredService<InMemoryEventStore>().GetEventUpToVersion(streamId, upToVersionExclusive));
-
+		public void AddEventSerializer(IServiceCollection services, Unit options)
+		{
+		}
 	}
 }

@@ -19,8 +19,8 @@ public delegate Task WriteEvents(IReadOnlyCollection<EventPayload> payloads);
 
 public interface IEventReader
 {
-	Task<IEnumerable<Event>> LoadEventsByStreamId(StreamId streamId, long upToVersionExclusive);
-	Task<IEnumerable<Event>> LoadAllEvents();
+	Task<IEnumerable<Event>> ReadEvents(StreamId streamId, long upToVersionExclusive);
+	Task<IEnumerable<Event>> ReadEvents();
 	Task<IReadOnlyList<Event>> ReadEvents(long fromPositionInclusive);
 }
 

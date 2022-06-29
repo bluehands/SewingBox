@@ -4,6 +4,7 @@ using EventSourcing.Example.Domain.Commands;
 using EventSourcing.Example.Domain.Projections;
 using EventSourcing.Example.JsonPayloads;
 using EventSourcing.JsonPayloads;
+using EventSourcing.Persistence.InMemory;
 using EventSourcing.Persistence.SqlStreamStore;
 using FunicularSwitch;
 using FunicularSwitch.Extensions;
@@ -12,16 +13,29 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using AccountCreated = EventSourcing.Example.Domain.Events.AccountCreated;
 
+var persistenceDemoOption = Persistence.InMemoryNoMappers;
+
+var payloadAssemblies = typeof(AccountCreated).Assembly.Yield();
+var commandProcessorAssemblies = typeof(CreateAccountCommandProcessor).Assembly.Yield();
+
 using var host = Host.CreateDefaultBuilder()
 	.ConfigureServices(serviceCollection =>
 	{
-		var payloadAssemblies = typeof(AccountCreated).Assembly.Yield();
-		var commandProcessorAssemblies = typeof(CreateAccountCommandProcessor).Assembly.Yield();
-		var payloadMapperAssemblies = new []{typeof(AccountCreatedMapper), typeof(CommandProcessedMapper)}.Select(t => t.Assembly);
+		persistenceDemoOption.Match(
+			inMemoryNoMappers: _ => 
+				serviceCollection
+					.AddEventSourcing(payloadAssemblies, commandProcessorAssemblies)
+					.AddInMemoryEventStore(),
+			sqlStreamStore: _ =>
+			{
+				var payloadMapperAssemblies =
+					new[] { typeof(AccountCreatedMapper), typeof(CommandProcessedMapper) }.Select(t => t.Assembly);
 
-		serviceCollection
-			.AddEventSourcing(payloadAssemblies, commandProcessorAssemblies, payloadMapperAssemblies)
-			.AddSqlStreamEventStore();
+				return serviceCollection
+					.AddEventSourcing(payloadAssemblies, commandProcessorAssemblies, payloadMapperAssemblies)
+					.AddSqlStreamEventStore();
+			}
+		);
 
 		serviceCollection.AddSingleton<Accounts>();
 		serviceCollection.AddTransient<SampleApp>();
@@ -64,4 +78,47 @@ class SampleApp
 			.Aggregate()
 			.Bind(_ => _executeCommandAndWait(new TransferMoney(myAccount, yourAccount, 123)));
 	}
+}
+
+[FunicularSwitch.Generators.UnionType(CaseOrder = FunicularSwitch.Generators.CaseOrder.AsDeclared)]
+public abstract class Persistence
+{
+	public static readonly Persistence InMemoryNoMappers = new InMemoryNoMappers_();
+	public static readonly Persistence SqlStreamStore = new SqlStreamStore_();
+
+	public class InMemoryNoMappers_ : Persistence
+	{
+		public InMemoryNoMappers_() : base(UnionCases.InMemoryNoMappers)
+		{
+		}
+	}
+
+	public class SqlStreamStore_ : Persistence
+	{
+		public SqlStreamStore_() : base(UnionCases.SqlStreamStore)
+		{
+		}
+	}
+
+	internal enum UnionCases
+	{
+		InMemoryNoMappers,
+		SqlStreamStore
+	}
+
+	internal UnionCases UnionCase { get; }
+	Persistence(UnionCases unionCase) => UnionCase = unionCase;
+
+	public override string ToString() => Enum.GetName(typeof(UnionCases), UnionCase) ?? UnionCase.ToString();
+	bool Equals(Persistence other) => UnionCase == other.UnionCase;
+
+	public override bool Equals(object? obj)
+	{
+		if (ReferenceEquals(null, obj)) return false;
+		if (ReferenceEquals(this, obj)) return true;
+		if (obj.GetType() != GetType()) return false;
+		return Equals((Persistence)obj);
+	}
+
+	public override int GetHashCode() => (int)UnionCase;
 }
