@@ -2,6 +2,7 @@
 using System.Reactive.Linq;
 using System.Threading.Tasks;
 using EventSourcing.Events;
+using EventSourcing.Internals;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SqlStreamStore;
@@ -16,19 +17,25 @@ public static class ServiceRegistration
 	{
 		options ??= new(
 			CreateStore: _ => new InMemoryStreamStore(),
-			CreateSerializer: _ => new JsonSerializer(),
+			CreateSerializer: _ => new JsonEventSerializer(),
 			UsePolling: true,
 			GetLastProcessedEventVersion: () => Task.FromResult(-1L)
 		);
 
 		services.AddSingleton(options.CreateStore);
-		services.AddTransient(options.CreateSerializer);
+		services.AddTransient<StreamStoreEventReader>();
 
-		if (options.UsePolling)
+		services.AddEventSourcing(new StreamStoreServices(), options);
+	}
+
+	class StreamStoreServices : IEventStoreServiceRegistration<EventStoreOptions>
+	{
+		public EventStream<Event> BuildEventStream(IServiceProvider serviceProvider, EventStoreOptions options)
 		{
-			services.AddSingleton(serviceProvider =>
+			var eventReader = serviceProvider.GetRequiredService<StreamStoreEventReader>();
+
+			if (options.UsePolling)
 			{
-				var eventReader = serviceProvider.GetRequiredService<StreamStoreEventReader>();
 				return EventStream.CreateWithPolling(
 					getLastProcessedEventNr: options.GetLastProcessedEventVersion,
 					getEventNr: e => e.Version,
@@ -37,51 +44,46 @@ public static class ServiceRegistration
 					getEvents: e => Task.FromResult(e),
 					serviceProvider.GetRequiredService<ILogger<Event>>()
 				);
-			});
-		}
-		else
-		{
-			services.AddSingleton(serviceProvider =>
+			}
+
+			var eventStore = serviceProvider.GetRequiredService<IStreamStore>();
+
+			var existingEvents = Observable.Create<Event>(async (observer, _) =>
 			{
-				var eventReader = serviceProvider.GetRequiredService<StreamStoreEventReader>();
-				var eventStore = serviceProvider.GetRequiredService<IStreamStore>();
-
-				var existingEvents = Observable.Create<Event>(async (observer, _) =>
-				{
-					var lastProcessedVersion = await options.GetLastProcessedEventVersion();
-					var allEvents = await eventReader.ReadEvents(lastProcessedVersion + 1);
-					foreach (var @event in allEvents) observer.OnNext(@event);
-					observer.OnCompleted();
-				});
-
-				var futureEvents = new System.Reactive.Subjects.Subject<Event>();
-				eventStore.SubscribeToAll(null,
-					async (_, message, _) => futureEvents.OnNext(await eventReader.ToEvent(message)),
-					(_, reason, exception) =>
-						serviceProvider.GetRequiredService<ILogger<Event>>().LogCritical($"Event subscription dropped: {reason}, {exception}. No further event will be received")
-				);
-
-				return new EventStream<Event>(existingEvents.Concat(futureEvents));
+				var lastProcessedVersion = await options.GetLastProcessedEventVersion();
+				var allEvents = await eventReader.ReadEvents(lastProcessedVersion + 1);
+				foreach (var @event in allEvents) observer.OnNext(@event);
+				observer.OnCompleted();
 			});
+
+			var futureEvents = new System.Reactive.Subjects.Subject<Event>();
+			eventStore.SubscribeToAll(null,
+				async (_, message, _) => futureEvents.OnNext(await eventReader.ToEvent(message)),
+				(_, reason, exception) =>
+					serviceProvider.GetRequiredService<ILogger<Event>>().LogCritical($"Event subscription dropped: {reason}, {exception}. No further event will be received")
+			);
+
+			return new(existingEvents.Concat(futureEvents));
 		}
 
-		services.AddSingleton<IObservable<Event>>(provider => provider.GetRequiredService<EventStream<Event>>());
+		public void AddEventReader(IServiceCollection services, EventStoreOptions options)
+		{
+			services.AddTransient<IEventReader, StreamStoreEventReader>();
+		}
 
-		
-		services.AddTransient<IEventWriter, StreamStoreEventWriter>();
-		services.AddTransient<StreamStoreEventReader>();
-		services.AddTransient<IEventReader, StreamStoreEventReader>();
+		public void AddEventWriter(IServiceCollection services, EventStoreOptions options)
+		{
+			services.AddTransient<IEventWriter, StreamStoreEventWriter>();
+		}
 
-		//TODO: move to eventsourcing
-		services.AddSingleton<WriteEvents>(serviceProvider => payloads => serviceProvider.GetRequiredService<IEventWriter>().WriteEvents(payloads));
-		services.AddSingleton<LoadAllEvents>(serviceProvider => () => serviceProvider.GetRequiredService<IEventReader>().LoadAllEvents());
-
-		services.AddSingleton<LoadEventsByStreamId>(serviceProvider => 
-			(streamId, upToVersionExclusive) => serviceProvider.GetRequiredService<IEventReader>().LoadEventsByStreamId(streamId, upToVersionExclusive));
+		public void AddEventSerializer(IServiceCollection services, EventStoreOptions options)
+		{
+			services.AddTransient(options.CreateSerializer);
+		}
 	}
 }
 
-public class JsonSerializer : IEventSerializer<string>
+public class JsonEventSerializer : IEventSerializer<string>
 {
 	public string Serialize(object serializablePayload) => System.Text.Json.JsonSerializer.Serialize(serializablePayload);
 

@@ -21,6 +21,20 @@ public static class StartUpExtensions
 
 public static class ServiceCollectionExtension
 {
+	public static IServiceCollection AddEventSourcing<TOptions>(this IServiceCollection services, IEventStoreServiceRegistration<TOptions> eventStoreServices, TOptions options)
+	{
+		services.AddSingleton(provider => eventStoreServices.BuildEventStream(provider, options));
+		eventStoreServices.AddEventReader(services, options);
+		eventStoreServices.AddEventWriter(services, options);
+		eventStoreServices.AddEventSerializer(services, options);
+
+		return services
+			.AddSingleton<IObservable<Event>>(provider => provider.GetRequiredService<EventStream<Event>>())
+			.AddSingleton<WriteEvents>(serviceProvider => payloads => serviceProvider.GetRequiredService<IEventWriter>().WriteEvents(payloads))
+			.AddSingleton<LoadAllEvents>(serviceProvider => () => serviceProvider.GetRequiredService<IEventReader>().LoadAllEvents())
+			.AddSingleton<LoadEventsByStreamId>(serviceProvider => (streamId, upToVersionExclusive) => serviceProvider.GetRequiredService<IEventReader>().LoadEventsByStreamId(streamId, upToVersionExclusive));
+	}
+
 	public static IServiceCollection AddEventSourcing(this IServiceCollection serviceCollection,
 		IEnumerable<Assembly> payloadAssemblies,
 		IEnumerable<Assembly> commandProcessorAssemblies,
