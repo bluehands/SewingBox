@@ -9,11 +9,11 @@ using SqlStreamStore;
 
 namespace EventSourcing.Persistence.SqlStreamStore;
 
-public record EventStoreOptions(Func<IServiceProvider, IStreamStore> CreateStore, Func<IServiceProvider, IEventSerializer<string>> CreateSerializer, bool UsePolling, Func<Task<long>> GetLastProcessedEventVersion);
+public record SqlStreamEventStoreOptions(Func<IServiceProvider, IStreamStore> CreateStore, Func<IServiceProvider, IEventSerializer<string>> CreateSerializer, bool UsePolling, Func<Task<long>> GetLastProcessedEventVersion);
 
 public static class ServiceRegistration
 {
-	public static IServiceCollection AddSqlStreamEventStore(this IServiceCollection services, EventStoreOptions options = null)
+	public static IServiceCollection AddSqlStreamEventStore(this IServiceCollection services, SqlStreamEventStoreOptions options = null)
 	{
 		options ??= new(
 			CreateStore: _ => new InMemoryStreamStore(),
@@ -29,9 +29,9 @@ public static class ServiceRegistration
 		return services;
 	}
 
-	class StreamStoreServices : IEventStoreServiceRegistration<EventStoreOptions>
+	class StreamStoreServices : IEventStoreServiceRegistration<SqlStreamEventStoreOptions>
 	{
-		public EventStream<Event> BuildEventStream(IServiceProvider serviceProvider, EventStoreOptions options)
+		public EventStream<Event> BuildEventStream(IServiceProvider serviceProvider, SqlStreamEventStoreOptions options)
 		{
 			var eventReader = serviceProvider.GetRequiredService<StreamStoreEventReader>();
 
@@ -67,17 +67,17 @@ public static class ServiceRegistration
 			return new(existingEvents.Concat(futureEvents));
 		}
 
-		public void AddEventReader(IServiceCollection services, EventStoreOptions options)
+		public void AddEventReader(IServiceCollection services, SqlStreamEventStoreOptions options)
 		{
 			services.AddTransient<IEventReader, StreamStoreEventReader>();
 		}
 
-		public void AddEventWriter(IServiceCollection services, EventStoreOptions options)
+		public void AddEventWriter(IServiceCollection services, SqlStreamEventStoreOptions options)
 		{
 			services.AddTransient<IEventWriter, StreamStoreEventWriter>();
 		}
 
-		public void AddEventSerializer(IServiceCollection services, EventStoreOptions options)
+		public void AddEventSerializer(IServiceCollection services, SqlStreamEventStoreOptions options)
 		{
 			services.AddTransient(options.CreateSerializer);
 		}

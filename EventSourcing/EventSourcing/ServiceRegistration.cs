@@ -13,8 +13,7 @@ public static class StartUpExtensions
 {
 	public static void UseEventSourcing(this IServiceProvider serviceProvider)
 	{
-		// this actually subscribes command processors to commands
-		serviceProvider.GetRequiredService<CommandProcessorSubscription>();
+		serviceProvider.SubscribeCommandProcessors();
 		serviceProvider.GetRequiredService<EventStream<Event>>().Start();
 	}
 }
@@ -48,7 +47,7 @@ public static class ServiceCollectionExtension
 			serviceCollection.RegisterPayloadMappers(payloadMapperAssemblies);
 
 		serviceCollection.AddSingleton<ExecuteCommand>(provider => provider.GetRequiredService<CommandStream>().SendCommand);
-		serviceCollection.AddSingleton<ExecuteCommandAndWaitUntilApplied>(provider => (command, processedStream) =>  provider.GetRequiredService<CommandStream>().SendCommandAndWaitUntilApplied(processedStream, command));
+		serviceCollection.AddSingleton<ExecuteCommandAndWaitUntilApplied>(provider => (command, processedStream) =>  provider.GetRequiredService<CommandStream>().SendCommandAndWaitUntilApplied(command, processedStream));
 
 		return serviceCollection;
 	}
@@ -95,37 +94,43 @@ public static class ServiceCollectionExtension
 		foreach (var (serviceType, implementationType) in tuples)
 			serviceCollection.Add(ServiceDescriptor.Describe(serviceType, implementationType, ServiceLifetime.Scoped));
 
-		return serviceCollection.SubscribeCommandProcessors();
+		return serviceCollection;
 	}
 
 	public static IServiceCollection SubscribeCommandProcessors(this IServiceCollection serviceCollection)
 	{
-		serviceCollection.AddSingleton(provider =>
-		{
-			var commandStream = provider.GetRequiredService<CommandStream>();
-			var writeEvents = provider.GetRequiredService<WriteEvents>();
-
-			var subscription = commandStream
-				.SubscribeCommandProcessors(
-					commandType =>
-					{
-						var commandProcessorType = typeof(CommandProcessor<>).MakeGenericType(commandType);
-						try
-						{
-							return (CommandProcessor)provider.GetService(commandProcessorType);
-						}
-						catch (Exception e)
-						{
-							provider.GetService<ILogger<Event>>()?.LogError(e, $"Failed to resolve command processor of type {commandProcessorType}");
-						}
-
-						return null;
-					},
-					writeEvents, provider.GetService<ILogger<Event>>());
-			return new CommandProcessorSubscription(subscription);
-		});
+		serviceCollection.AddSingleton(provider => { return SubscribeCommandProcessors(provider); });
 
 		return serviceCollection;
+	}
+
+	public static CommandProcessorSubscription SubscribeCommandProcessors(this IServiceProvider provider)
+	{
+		var commandStream = provider.GetRequiredService<CommandStream>();
+		var writeEvents = provider.GetRequiredService<WriteEvents>();
+
+		var subscription = commandStream
+			.SubscribeCommandProcessors(
+				commandType =>
+				{
+					var commandProcessorType = typeof(CommandProcessor<>).MakeGenericType(commandType);
+					try
+					{
+						using (var scope = provider.CreateScope())
+						{
+							return (CommandProcessor)scope.ServiceProvider.GetService(commandProcessorType);	
+						}
+					}
+					catch (Exception e)
+					{
+						provider.GetService<ILogger<Event>>()?.LogError(e,
+							$"Failed to resolve command processor of type {commandProcessorType}");
+					}
+
+					return null;
+				},
+				writeEvents, provider.GetService<ILogger<Event>>());
+		return new CommandProcessorSubscription(subscription);
 	}
 }
 

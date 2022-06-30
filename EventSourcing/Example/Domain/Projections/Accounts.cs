@@ -11,35 +11,47 @@ public record Account(string Id, string Owner, decimal Balance);
 
 public class Accounts : ProjectionCache<Account>
 {
-	readonly ILogger<Accounts> _logger;
+	readonly AccountProjection _accountProjection;
 
-	public Accounts(IObservable<Event> events, LoadEventsByStreamId loadEventsByStreamId, LoadAllEvents loadAllEvents,
-		ILogger<Accounts> logger)
-		: base(NoEvictionCacheCollection<StreamId, Account>.Empty, events, loadEventsByStreamId, loadAllEvents,
-			e => e.StreamId.StreamType == StreamTypes.Account, logger) =>
-		_logger = logger;
+	public Accounts(IObservable<Event> events, LoadEventsByStreamId loadEventsByStreamId, LoadAllEvents loadAllEvents, AccountProjection accountProjection, ILogger<Accounts> logger)
+		: base(NoEvictionCacheCollection<StreamId, Account>.Empty, events, loadEventsByStreamId, loadAllEvents, e => e.StreamId.StreamType == StreamTypes.Account, logger) =>
+		_accountProjection = accountProjection;
 
-	protected override Option<Account> InternalApply(Option<Account> account, Event @event) => @event.Payload switch
+
+	protected override Option<Account> InternalApply(Option<Account> account, Event @event)
 	{
-		AccountPayload accountPayload => accountPayload.Match(
-			accountCreated: accountCreated =>
-				new Account(accountCreated.AccountId, accountCreated.Owner, accountCreated.InitialBalance),
-			paymentReceived: paymentReceived => 
-				ApplyIfExists(account, paymentReceived, a => a with { Balance = a.Balance + paymentReceived.Amount }),
-			paymentMade: paymentMade =>
-				ApplyIfExists(account, paymentMade, a => a with { Balance = a.Balance - paymentMade.Amount })
-		),
-		_ => account
-	};
+		var eventPayload = @event.Payload;
+		return eventPayload switch
+		{
+			AccountPayload accountPayload => _accountProjection.Apply(account, accountPayload),
+			_ => account
+		};
+	}
+}
 
-	Option<Account> ApplyIfExists(Option<Account> account, AccountPayload payload, Func<Account, Option<Account>> apply)
-	{
-		return account.Match(
+public class AccountProjection
+{
+	readonly ILogger<AccountProjection> _logger;
+
+	public AccountProjection(ILogger<AccountProjection> logger) => _logger = logger;
+
+	public Option<Account> Apply(Option<Account> account, AccountPayload accountPayload) =>
+		accountPayload
+			.Match(
+				accountCreated: accountCreated =>
+					new Account(accountCreated.AccountId, accountCreated.Owner, accountCreated.InitialBalance),
+				paymentReceived: paymentReceived =>
+					ApplyIfExists(account, paymentReceived, a => a with { Balance = a.Balance + paymentReceived.Amount }),
+				paymentMade: paymentMade =>
+					ApplyIfExists(account, paymentMade, a => a with { Balance = a.Balance - paymentMade.Amount })
+			);
+
+	public Option<Account> ApplyIfExists(Option<Account> account, AccountPayload payload, Func<Account, Option<Account>> apply) =>
+		account.Match(
 			apply,
 			() =>
 			{
 				_logger.LogWarning($"Event {payload} for non existing account {payload.AccountId}. Ignored");
 				return account;
 			});
-	}
 }

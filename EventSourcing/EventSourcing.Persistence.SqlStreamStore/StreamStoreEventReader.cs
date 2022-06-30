@@ -33,7 +33,7 @@ class StreamStoreEventReader : IEventReader
 			.ConfigureAwait(false);
 	}
 
-	public Task<IEnumerable<Event>> ReadEvents() => throw new NotImplementedException();
+	public async Task<IEnumerable<Event>> ReadEvents() => await ReadEvents(Position.Start);
 
 	public async Task<IReadOnlyList<Event>> ReadEvents(long fromPositionInclusive)
 	{

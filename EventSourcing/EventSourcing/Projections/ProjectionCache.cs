@@ -193,7 +193,7 @@ public abstract class ProjectionCache<T> : IDisposable
 		public Task Task { get; }
 
 		public ProjectionWaitHandle(ProjectionCache<T> projectionCache, CommandStream commandStream)
-		: this(commandStream.SendCommandAndWaitUntilApplied(projectionCache.CommandProcessedStream, new NoOp()))
+		: this(commandStream.SendCommandAndWaitUntilApplied(new NoOp(), projectionCache.CommandProcessedStream))
 		{
 		}
 

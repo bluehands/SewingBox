@@ -83,7 +83,8 @@ public static class CommandStreamExtension
 					.ConfigureAwait(false);
 			});
 
-	public static async Task<OperationResult<Unit>> SendCommandAndWaitUntilApplied(this CommandStream commandStream, IObservable<CommandProcessed> commandProcessedEvents, Command command)
+	public static async Task<OperationResult<Unit>> SendCommandAndWaitUntilApplied(this CommandStream commandStream,
+		Command command, IObservable<CommandProcessed> commandProcessedEvents)
 	{
 		var processed = commandProcessedEvents
 			.FirstAsync(c => c.CommandId == command.Id)

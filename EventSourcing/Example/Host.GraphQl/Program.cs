@@ -1,0 +1,32 @@
+using EventSourcing;
+using Example.Host;
+using Example.Host.GraphQl;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services
+	.AddExampleApp(Persistence.SqlStreamStore(StreamStoreDemoOptions.LocalSqlExpress))
+	.AddGraphQLServer()
+	.AddQueryType<Query>()
+	.AddMutationType<Mutation>()
+	.AddSubscriptionType<Subscription>()
+	.AddInMemorySubscriptions();
+
+var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+	app.UseDeveloperExceptionPage();
+}
+
+app
+	.UseRouting()
+	.UseWebSockets()
+	.UseEndpoints(endpoints =>
+	{
+		endpoints.MapGraphQL();
+	});
+
+app.Services.UseEventSourcing();
+
+app.Run();
