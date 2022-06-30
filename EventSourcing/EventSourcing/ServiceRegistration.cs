@@ -48,6 +48,7 @@ public static class ServiceCollectionExtension
 
 		serviceCollection.AddSingleton<ExecuteCommand>(provider => provider.GetRequiredService<CommandStream>().SendCommand);
 		serviceCollection.AddSingleton<ExecuteCommandAndWaitUntilApplied>(provider => (command, processedStream) =>  provider.GetRequiredService<CommandStream>().SendCommandAndWaitUntilApplied(command, processedStream));
+		serviceCollection.AddSingleton<EventStreamFactory>();
 
 		return serviceCollection;
 	}
@@ -97,13 +98,6 @@ public static class ServiceCollectionExtension
 		return serviceCollection;
 	}
 
-	public static IServiceCollection SubscribeCommandProcessors(this IServiceCollection serviceCollection)
-	{
-		serviceCollection.AddSingleton(provider => { return SubscribeCommandProcessors(provider); });
-
-		return serviceCollection;
-	}
-
 	public static CommandProcessorSubscription SubscribeCommandProcessors(this IServiceProvider provider)
 	{
 		var commandStream = provider.GetRequiredService<CommandStream>();
@@ -116,10 +110,8 @@ public static class ServiceCollectionExtension
 					var commandProcessorType = typeof(CommandProcessor<>).MakeGenericType(commandType);
 					try
 					{
-						using (var scope = provider.CreateScope())
-						{
-							return (CommandProcessor)scope.ServiceProvider.GetService(commandProcessorType);	
-						}
+						using var scope = provider.CreateScope();
+						return (CommandProcessor)scope.ServiceProvider.GetService(commandProcessorType);
 					}
 					catch (Exception e)
 					{
@@ -130,7 +122,7 @@ public static class ServiceCollectionExtension
 					return null;
 				},
 				writeEvents, provider.GetService<ILogger<Event>>());
-		return new CommandProcessorSubscription(subscription);
+		return new(subscription);
 	}
 }
 

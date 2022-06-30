@@ -1,5 +1,7 @@
 using System.Reactive.Linq;
 using System.Reactive.Threading.Tasks;
+using EventSourcing.Events;
+using Example.Domain.Events;
 using Example.Domain.Projections;
 using JetBrains.Annotations;
 
@@ -36,6 +38,12 @@ public class Subscription
 
 	}
 
-
 	public record AccountAndBalance(string Owner, decimal Balance);
+
+	[Subscribe(With = nameof(SubscribeTotalBalanceChanges))]
+	public decimal OnTotalBalanceChanged([EventMessage] decimal totalBalance) => totalBalance;
+
+	public IObservable<decimal> SubscribeTotalBalanceChanges([Service] EventStreamFactory factory) => factory.GetEventStream(0).Scan(0M, (balance, @event) => @event.Payload is AccountCreated c? balance + c.InitialBalance : balance);
+	
 }
+
