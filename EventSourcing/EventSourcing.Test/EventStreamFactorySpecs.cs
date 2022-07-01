@@ -9,7 +9,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace EventSourcing.Test;
 
-public class TestEnvironment
+public static class TestEnvironment
 {
 	public static IServiceProvider Services { get; }
 
