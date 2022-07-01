@@ -3,13 +3,58 @@ using System.Reactive.Linq;
 using System.Threading.Tasks;
 using EventSourcing.Events;
 using EventSourcing.Internals;
+using FunicularSwitch.Generators;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SqlStreamStore;
 
 namespace EventSourcing.Persistence.SqlStreamStore;
 
-public record SqlStreamEventStoreOptions(Func<IServiceProvider, IStreamStore> CreateStore, Func<IServiceProvider, IEventSerializer<string>> CreateSerializer, bool UsePolling, Func<Task<long>> GetLastProcessedEventPosition);
+public record SqlStreamEventStoreOptions(Func<IServiceProvider, IStreamStore> CreateStore, Func<IServiceProvider, IEventSerializer<string>> CreateSerializer, PollingOptions PollingOptions, Func<Task<long>> GetLastProcessedEventPosition);
+
+[UnionType(CaseOrder = CaseOrder.AsDeclared)]
+public abstract class PollingOptions
+{
+	public static readonly PollingOptions NoPolling = new NoPolling_();
+
+	public static PollingOptions UsePolling(PeriodicObservable.PollStrategy<Event, long> pollStrategy) => new UsePolling_(pollStrategy);
+
+	public class NoPolling_ : PollingOptions
+	{
+		public NoPolling_() : base(UnionCases.NoPolling)
+		{
+		}
+	}
+
+	public class UsePolling_ : PollingOptions
+	{
+		public PeriodicObservable.PollStrategy<Event, long> PollStrategy { get; }
+
+		public UsePolling_(PeriodicObservable.PollStrategy<Event, long> pollStrategy) : base(UnionCases.UsePolling) => PollStrategy = pollStrategy;
+	}
+
+	internal enum UnionCases
+	{
+		NoPolling,
+		UsePolling
+	}
+
+	internal UnionCases UnionCase { get; }
+	PollingOptions(UnionCases unionCase) => UnionCase = unionCase;
+
+	public override string ToString() => Enum.GetName(typeof(UnionCases), UnionCase) ?? UnionCase.ToString();
+	bool Equals(PollingOptions other) => UnionCase == other.UnionCase;
+
+	public override bool Equals(object obj)
+	{
+		if (ReferenceEquals(null, obj)) return false;
+		if (ReferenceEquals(this, obj)) return true;
+		if (obj.GetType() != GetType()) return false;
+		return Equals((PollingOptions)obj);
+	}
+
+	public override int GetHashCode() => (int)UnionCase;
+}
 
 public static class ServiceRegistration
 {
@@ -18,7 +63,7 @@ public static class ServiceRegistration
 		options ??= new(
 			CreateStore: _ => new InMemoryStreamStore(),
 			CreateSerializer: _ => new JsonEventSerializer(),
-			UsePolling: true,
+			PollingOptions: PollingOptions.UsePolling(new PeriodicObservable.RetryNTimesPollStrategy<Event, long>(e => e.Position, 10, l => l + 1)), 
 			GetLastProcessedEventPosition: () => Task.FromResult(-1L)
 		);
 
@@ -35,36 +80,39 @@ public static class ServiceRegistration
 		{
 			var eventReader = serviceProvider.GetRequiredService<SqlStreamStoreEventReader>();
 
-			if (options.UsePolling)
-			{
-				return EventStream.CreateWithPolling(
-					getLastProcessedEventNr: options.GetLastProcessedEventPosition,
-					getEventNr: e => e.Position,
-					getOrderedNewEvents: versionExclusive => eventReader.ReadEvents(versionExclusive + 1),
-					pollInterval: TimeSpan.FromMilliseconds(100),
-					getEvents: e => Task.FromResult(e),
-					serviceProvider.GetRequiredService<ILogger<Event>>()
-				);
-			}
+			return options.PollingOptions
+				.Match(usePolling: pollOptions =>
+				{
+					return EventStream.CreateWithPolling(
+						getLastProcessedEventNr: options.GetLastProcessedEventPosition,
+						getEventNr: e => e.Position,
+						getOrderedNewEvents: versionExclusive => eventReader.ReadEvents(versionExclusive + 1),
+						pollInterval: TimeSpan.FromMilliseconds(100),
+						getEvents: e => Task.FromResult(e),
+						serviceProvider.GetRequiredService<ILogger<Event>>(),
+						pollOptions.PollStrategy
+					);
+				}, noPolling: _ =>
+				{
+					var eventStore = serviceProvider.GetRequiredService<IStreamStore>();
 
-			var eventStore = serviceProvider.GetRequiredService<IStreamStore>();
+					var existingEvents = Observable.Create<Event>(async (observer, _) =>
+					{
+						var lastProcessedVersion = await options.GetLastProcessedEventPosition();
+						var allEvents = await eventReader.ReadEvents(lastProcessedVersion + 1);
+						foreach (var @event in allEvents) observer.OnNext(@event);
+						observer.OnCompleted();
+					});
 
-			var existingEvents = Observable.Create<Event>(async (observer, _) =>
-			{
-				var lastProcessedVersion = await options.GetLastProcessedEventPosition();
-				var allEvents = await eventReader.ReadEvents(lastProcessedVersion + 1);
-				foreach (var @event in allEvents) observer.OnNext(@event);
-				observer.OnCompleted();
-			});
+					var futureEvents = new System.Reactive.Subjects.Subject<Event>();
+					eventStore.SubscribeToAll(null,
+						async (_, message, _) => futureEvents.OnNext(await eventReader.ToEvent(message)),
+						(_, reason, exception) =>
+							serviceProvider.GetRequiredService<ILogger<Event>>().LogCritical($"Event subscription dropped: {reason}, {exception}. No further event will be received")
+					);
 
-			var futureEvents = new System.Reactive.Subjects.Subject<Event>();
-			eventStore.SubscribeToAll(null,
-				async (_, message, _) => futureEvents.OnNext(await eventReader.ToEvent(message)),
-				(_, reason, exception) =>
-					serviceProvider.GetRequiredService<ILogger<Event>>().LogCritical($"Event subscription dropped: {reason}, {exception}. No further event will be received")
-			);
-
-			return new(existingEvents.Concat(futureEvents));
+					return EventStream.Create(existingEvents.Concat(futureEvents));
+				});
 		}
 
 		public void AddEventReader(IServiceCollection services, SqlStreamEventStoreOptions options)

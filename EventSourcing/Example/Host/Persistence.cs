@@ -1,4 +1,5 @@
-﻿using EventSourcing.Persistence.SqlStreamStore;
+﻿using EventSourcing.Events;
+using EventSourcing.Persistence.SqlStreamStore;
 using SqlStreamStore;
 
 namespace Example.Host;
@@ -52,7 +53,7 @@ public static class StreamStoreDemoOptions
 	public static readonly SqlStreamEventStoreOptions InMemory = new(
 		CreateSerializer: _ => new JsonEventSerializer(),
 		CreateStore: _ => new InMemoryStreamStore(),
-		UsePolling: true,
+		PollingOptions: PollingOptions.UsePolling(EventStream.PollStrategyRetryForever), 
 		GetLastProcessedEventPosition: () => Task.FromResult(-1L)
 	);
 
@@ -65,7 +66,7 @@ public static class StreamStoreDemoOptions
 			store.CreateSchemaIfNotExists();
 			return store;
 		},
-		UsePolling: true,
+		PollingOptions: PollingOptions.UsePolling(EventStream.PollStrategyRetryOnFail(5)), 
 		GetLastProcessedEventPosition: () => Task.FromResult(-1L)
 	);
 }

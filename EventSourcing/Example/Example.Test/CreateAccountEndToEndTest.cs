@@ -22,7 +22,8 @@ public class TestHost
 	public TestHost()
 	{
 		var serviceCollection = new ServiceCollection();
-		serviceCollection.AddExampleApp(Persistence.SqlStreamStore(StreamStoreDemoOptions.InMemory))
+		serviceCollection
+			.AddExampleApp(Persistence.SqlStreamStore(StreamStoreDemoOptions.InMemory))
 			.AddLogging(builder => builder.AddConsole());
 
 		Services = serviceCollection.BuildServiceProvider();

@@ -1,10 +1,23 @@
 ﻿using System.Reactive.Linq;
 using System.Reactive.Threading.Tasks;
 using EventSourcing.Events;
+using EventSourcing.Internals;
 using FluentAssertions;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace EventSourcing.Test;
+
+public class TestEnvironment
+{
+	public static IServiceProvider Services { get; }
+
+	static TestEnvironment() =>
+		Services = new ServiceCollection()
+			.AddLogging()
+			.BuildServiceProvider();
+}
 
 [TestClass]
 public class EventFactorySpecs
@@ -43,5 +56,39 @@ public class EventFactorySpecs
 
 		var allEventsList = await allEvents.ToList().ToTask();
 		allEventsList.Select(e => e.Position).Should().ContainInOrder(0, 1, 2, 3, 4, 5, 6);
+	}
+}
+
+[TestClass]
+public class PollSpecs
+{
+	[TestMethod]
+	public async Task WithLimitedRetries_ThenUnreadableEventsAreSkipped()
+	{
+		static Task<IReadOnlyList<(string e, long position)>> GetNewEvents(long positionInclusive)
+		{
+			static Task<IReadOnlyList<(string e, long position)>> ToEvent(long pos) => Task.FromResult((IReadOnlyList<(string e, long position)>)new[] { ("ok", position: pos) });
+
+			if (positionInclusive == 0 || positionInclusive == 2)
+				return ToEvent(positionInclusive);
+
+			throw new("Broken unreadable or unmapped event");
+		}
+
+		var stream = EventStream.CreateWithPolling(
+			() => Task.FromResult(-1L),
+			t => t.position,
+			lastProcessedPosition => GetNewEvents(lastProcessedPosition + 1),
+			TimeSpan.FromMilliseconds(10),
+			e => Task.FromResult(e),
+			TestEnvironment.Services.GetRequiredService<ILogger<PollSpecs>>(),
+			new PeriodicObservable.RetryNTimesPollStrategy<(string e, long position), long>(t => t.position, 5, l => l+1)
+		);
+
+		var firstTwoEvents = stream.Take(2).ToList().ToTask();
+		
+		stream.Start();
+
+		(await firstTwoEvents).Select(e => e.position).Should().ContainInOrder(0L, 2L);
 	}
 }

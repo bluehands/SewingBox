@@ -6,7 +6,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using EventSourcing.Events;
 using EventSourcing.Internals;
-using FunicularSwitch;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
@@ -42,42 +41,47 @@ public class InMemoryEventStore : IEventReader, IEventWriter
 		);
 }
 
+public record InMemoryEventStoryOptions(TimeSpan PollInterval, PeriodicObservable.PollStrategy<Event, long> PollStrategy);
+
+
 public static class ServiceRegistration
 {
-	public static IServiceCollection AddInMemoryEventStore(this IServiceCollection services)
+	public static IServiceCollection AddInMemoryEventStore(this IServiceCollection services, InMemoryEventStoryOptions? options = null)
 	{
 		services.AddSingleton<InMemoryEventStore>();
 
-		services.AddEventSourcing(new EventStoreServices(), No.Thing);
+		services.AddEventSourcing(new EventStoreServices(), options ?? new InMemoryEventStoryOptions(TimeSpan.FromMilliseconds(100), new PeriodicObservable.RetryForeverPollStrategy<Event, long>(e => e.Position)));
 
 		return services;
 	}
 
-	class EventStoreServices : IEventStoreServiceRegistration<Unit>
+	class EventStoreServices : IEventStoreServiceRegistration<InMemoryEventStoryOptions>
 	{
-		public EventStream<Event> BuildEventStream(IServiceProvider provider, Unit options)
+		public EventStream<Event> BuildEventStream(IServiceProvider provider, InMemoryEventStoryOptions options)
 		{
 			var inMemoryEventStore = provider.GetRequiredService<InMemoryEventStore>();
 			return EventStream.CreateWithPolling(
-				getLastProcessedEventNr: () => Task.FromResult(0L),
+				getLastProcessedEventNr: () => Task.FromResult(-1L),
 				getEventNr: e => e.Position,
-				getOrderedNewEvents: versionExclusive => inMemoryEventStore.ReadEvents(versionExclusive),
-				pollInterval: TimeSpan.FromMilliseconds(100),
+				getOrderedNewEvents: fromPositionExclusive => inMemoryEventStore.ReadEvents(fromPositionExclusive + 1),
+				pollInterval: options.PollInterval,
 				getEvents: Task.FromResult,
-				provider.GetService<ILogger<Event>>());
+				provider.GetRequiredService<ILogger<Event>>(),
+				options.PollStrategy
+			);
 		}
 
-		public void AddEventReader(IServiceCollection services, Unit options)
+		public void AddEventReader(IServiceCollection services, InMemoryEventStoryOptions options)
 		{
 			services.AddTransient<IEventReader>(provider => provider.GetRequiredService<InMemoryEventStore>());
 		}
 
-		public void AddEventWriter(IServiceCollection services, Unit options)
+		public void AddEventWriter(IServiceCollection services, InMemoryEventStoryOptions options)
 		{
 			services.AddTransient<IEventWriter>(provider => provider.GetRequiredService<InMemoryEventStore>());
 		}
 
-		public void AddEventSerializer(IServiceCollection services, Unit options)
+		public void AddEventSerializer(IServiceCollection services, InMemoryEventStoryOptions options)
 		{
 		}
 	}

@@ -42,12 +42,14 @@ public static class EventStream
 		Func<long, Task<IReadOnlyList<TSource>>> getOrderedNewEvents,
 		TimeSpan pollInterval,
 		Func<IEnumerable<TSource>, Task<IEnumerable<T>>> getEvents,
-		ILogger? logger)
+		ILogger logger, 
+		PeriodicObservable.PollStrategy<TSource, long> pollStrategy)
 	{
 		var eventNrStream = PeriodicObservable.Poll(
 			getLastProcessedEventNr,
 			getOrderedNewEvents,
-			(lastResult, lastArg) => lastResult.Count > 0 ? getEventNr(lastResult[lastResult.Count - 1]) : lastArg, pollInterval,
+			pollStrategy.GetPollPosition, 
+			pollInterval,
 			Scheduler.Default,
 			logger);
 
@@ -58,9 +60,9 @@ public static class EventStream
 
 				var events = (await getEvents(sourceEvents).ConfigureAwait(false)).ToImmutableList();
 				if (events.Count < sourceEvents.Count)
-					logger?.LogError($"Events missing. Loaded only {events.Count} of {sourceEvents.Count} events for source events: {string.Join(",", sourceEvents.Select(getEventNr))}");
+					logger.LogError($"Events missing. Loaded only {events.Count} of {sourceEvents.Count} events for source events: {string.Join(",", sourceEvents.Select(getEventNr))}");
 
-				logger?.LogInformation($"Publishing event range: {getEventNr(sourceEvents[0])} - {getEventNr(sourceEvents[sourceEvents.Count - 1])}");
+				logger.LogInformation($"Publishing event range: {getEventNr(sourceEvents[0])} - {getEventNr(sourceEvents[sourceEvents.Count - 1])}");
 				return events;
 			}, logger, 1)
 			.SelectMany(_ => _);
@@ -68,5 +70,8 @@ public static class EventStream
 		return Create(stream);
 	}
 
-	static EventStream<T> Create<T>(IObservable<T> events) => new(events);
+	public static EventStream<T> Create<T>(IObservable<T> events) => new(events);
+
+	public static PeriodicObservable.PollStrategy<Event, long> PollStrategyRetryOnFail(int retryCount) => new PeriodicObservable.RetryNTimesPollStrategy<Event, long>(e => e.Position, retryCount, l => l + 1);
+	public static PeriodicObservable.PollStrategy<Event, long> PollStrategyRetryForever = new PeriodicObservable.RetryForeverPollStrategy<Event, long>(e => e.Position);
 }
