@@ -10,10 +10,10 @@ namespace Example.Host.GraphQl;
 [UsedImplicitly]
 public class Query
 {
-	public async Task<IEnumerable<Account>> GetAccounts([Service] LoadAllEvents loadEvents,
+	public async Task<IEnumerable<Account>> GetAccounts([Service] ReadEvents readEvents,
 		[Service] Accounts accountCache)
 	{
-		var events = await loadEvents();
+		var events = await readEvents();
 		var accountsWithInitialBalance = await
 			events
 				.Select(e => e.Payload)

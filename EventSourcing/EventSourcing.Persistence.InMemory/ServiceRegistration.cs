@@ -17,9 +17,7 @@ public class InMemoryEventStore : IEventReader, IEventWriter
 	readonly List<Event> _events = new();
 	readonly SemaphoreSlim _lock = new(1);
 
-	public long MaxEventNumber => _events[_events.Count - 1].Version;
-
-	public Task<IEnumerable<Event>> ReadEvents() => _lock.ExecuteGuarded(() => (IEnumerable<Event>)_events.ToImmutableArray());
+	public long MaxEventNumber => _events[_events.Count - 1].Position;
 
 	public Task<IReadOnlyList<Event>> ReadEvents(long fromPositionInclusive) =>
 		_lock.ExecuteGuarded(() =>
@@ -33,7 +31,7 @@ public class InMemoryEventStore : IEventReader, IEventWriter
 			}
 		);
 
-	public Task<IEnumerable<Event>> ReadEvents(StreamId streamId, long upToVersionExclusive) => _lock.ExecuteGuarded(() => (IEnumerable<Event>)_events.Where(e => e.StreamId == streamId && e.Version < upToVersionExclusive).ToImmutableArray());
+	public Task<IEnumerable<Event>> ReadEvents(StreamId streamId, long upToPositionExclusive) => _lock.ExecuteGuarded(() => (IEnumerable<Event>)_events.Where(e => e.StreamId == streamId && e.Position < upToPositionExclusive).ToImmutableArray());
 
 	public Task WriteEvents(IReadOnlyCollection<EventPayload> eventPayloads) =>
 		_lock.ExecuteGuarded(() =>
@@ -62,7 +60,7 @@ public static class ServiceRegistration
 			var inMemoryEventStore = provider.GetRequiredService<InMemoryEventStore>();
 			return EventStream.CreateWithPolling(
 				getLastProcessedEventNr: () => Task.FromResult(0L),
-				getEventNr: e => e.Version,
+				getEventNr: e => e.Position,
 				getOrderedNewEvents: versionExclusive => inMemoryEventStore.ReadEvents(versionExclusive),
 				pollInterval: TimeSpan.FromMilliseconds(100),
 				getEvents: Task.FromResult,

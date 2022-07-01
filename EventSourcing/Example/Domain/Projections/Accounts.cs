@@ -13,8 +13,8 @@ public class Accounts : ProjectionCache<Account>
 {
 	readonly AccountProjection _accountProjection;
 
-	public Accounts(IObservable<Event> events, LoadEventsByStreamId loadEventsByStreamId, LoadAllEvents loadAllEvents, AccountProjection accountProjection, ILogger<Accounts> logger)
-		: base(NoEvictionCacheCollection<StreamId, Account>.Empty, events, loadEventsByStreamId, loadAllEvents, e => e.StreamId.StreamType == StreamTypes.Account, logger) =>
+	public Accounts(IObservable<Event> events, ReadEventsByStreamId readEventsByStreamId, ReadEvents readEvents, AccountProjection accountProjection, ILogger<Accounts> logger)
+		: base(NoEvictionCacheCollection<StreamId, Account>.Empty, events, readEventsByStreamId, readEvents, e => e.StreamId.StreamType == StreamTypes.Account, logger) =>
 		_accountProjection = accountProjection;
 
 

@@ -53,7 +53,7 @@ public static class StreamStoreDemoOptions
 		CreateSerializer: _ => new JsonEventSerializer(),
 		CreateStore: _ => new InMemoryStreamStore(),
 		UsePolling: true,
-		GetLastProcessedEventVersion: () => Task.FromResult(-1L)
+		GetLastProcessedEventPosition: () => Task.FromResult(-1L)
 	);
 
 	public static readonly SqlStreamEventStoreOptions LocalSqlExpress = new(
@@ -66,6 +66,6 @@ public static class StreamStoreDemoOptions
 			return store;
 		},
 		UsePolling: true,
-		GetLastProcessedEventVersion: () => Task.FromResult(-1L)
+		GetLastProcessedEventPosition: () => Task.FromResult(-1L)
 	);
 }

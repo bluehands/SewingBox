@@ -19,14 +19,13 @@ public delegate Task WriteEvents(IReadOnlyCollection<EventPayload> payloads);
 
 public interface IEventReader
 {
-	Task<IEnumerable<Event>> ReadEvents(StreamId streamId, long upToVersionExclusive);
-	Task<IEnumerable<Event>> ReadEvents();
+	Task<IEnumerable<Event>> ReadEvents(StreamId streamId, long upToPositionExclusive);
 	Task<IReadOnlyList<Event>> ReadEvents(long fromPositionInclusive);
 }
 
-public delegate Task<IEnumerable<Event>> LoadEventsByStreamId(StreamId streamId, long upToVersionExclusive);
+public delegate Task<IEnumerable<Event>> ReadEventsByStreamId(StreamId streamId, long upToVersionExclusive);
 
-public delegate Task<IEnumerable<Event>> LoadAllEvents();
+public delegate Task<IEnumerable<Event>> ReadEvents(long fromPositionInclusive = 0);
 
 public delegate Task ExecuteCommand(Command command);
 public delegate Task<OperationResult<Unit>> ExecuteCommandAndWaitUntilApplied(Command command, IObservable<CommandProcessed> processedStream);

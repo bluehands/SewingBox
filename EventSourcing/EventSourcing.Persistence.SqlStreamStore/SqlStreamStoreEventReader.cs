@@ -9,31 +9,29 @@ using SqlStreamStore.Streams;
 
 namespace EventSourcing.Persistence.SqlStreamStore;
 
-class StreamStoreEventReader : IEventReader
+class SqlStreamStoreEventReader : IEventReader
 {
-	static readonly int s_ReadPageSize = 1000;
+	const int ReadPageSize = 1000;
 	readonly IStreamStore _eventStore;
 	readonly IEventSerializer<string> _eventSerializer;
 
-	public StreamStoreEventReader(IStreamStore eventStore, IEventSerializer<string> eventSerializer)
+	public SqlStreamStoreEventReader(IStreamStore eventStore, IEventSerializer<string> eventSerializer)
 	{
 		_eventStore = eventStore;
 		_eventSerializer = eventSerializer;
 	}
 
-	public async Task<IEnumerable<Event>> ReadEvents(Events.StreamId streamId, long upToVersionExclusive)
+	public async Task<IEnumerable<Event>> ReadEvents(Events.StreamId streamId, long upToPositionExclusive)
 	{
 		var allForStream = await _eventStore
 			.ReadStreamForwards(IdTranslation.ToStreamStoreStreamId(streamId), StreamVersion.Start, int.MaxValue)
 			.ConfigureAwait(false);
 
 		return await allForStream.Messages
-			.Where(e => e.Position < upToVersionExclusive)
+			.Where(e => e.Position < upToPositionExclusive)
 			.SelectAsync(ToEvent)
 			.ConfigureAwait(false);
 	}
-
-	public async Task<IEnumerable<Event>> ReadEvents() => await ReadEvents(Position.Start);
 
 	public async Task<IReadOnlyList<Event>> ReadEvents(long fromPositionInclusive)
 	{
@@ -41,7 +39,7 @@ class StreamStoreEventReader : IEventReader
 		var currentPosition = fromPositionInclusive;
 		while (true)
 		{
-			var page = await _eventStore.ReadAllForwards(currentPosition, s_ReadPageSize);
+			var page = await _eventStore.ReadAllForwards(currentPosition, ReadPageSize);
 			currentPosition = page.NextPosition;
 			events = events.Concat(page.Messages);
 			if (page.IsEnd)
