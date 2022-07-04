@@ -6,9 +6,9 @@ CommandProcessors are designed in a functional way. They take the command and ba
 
 For the projection / read model side there are helpers for caching a projection that is updated from the event stream as well as a possibility to listen to events starting at a specific version (useful for persistent projections). 
 
-There is an example application with a console and a web host. Web host uses graphql to expose an api to clients. It's nice to see, how subscriptions are used to easily notify clients about changes on read models. A unit test project shows end to end testing from command to projections as well as replay testing of certain event sequences to assert that the projection is working correctly.
+There is an example application with a console and a web host. Web host uses graphql to expose an api to clients. It's nice to see, how subscriptions are used to easily notify clients about changes on read models. A unit test project shows end to end testing from command to projection as well as replay testing of certain event sequences to assert that a projection is working correctly.
 
-Feel free to use the code as starting point for your own es based solution. Similar versions are in productive use in various of our projects with events persisted in Redis, MS SqlServer, Oracle, PostGres and custom solutions. Goal is to publish parts of it as nuget package.
+Feel free to use the code as starting point for your own es based solution. Similar versions are in productive use in various of our projects with events persisted in Redis, MS SqlServer, Oracle, PostGres and custom storage solutions. Goal is to publish parts of it as nuget package.
 
 TODOs:
  - example angular client app
