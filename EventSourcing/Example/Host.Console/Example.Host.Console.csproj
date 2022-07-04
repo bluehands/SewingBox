@@ -13,8 +13,8 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Example\Domain\Example.Domain.csproj" />
-    <ProjectReference Include="..\Example\Host\Example.Host.csproj" />
+    <ProjectReference Include="..\Domain\Example.Domain.csproj" />
+    <ProjectReference Include="..\Host\Example.Host.csproj" />
   </ItemGroup>
 
 </Project>
