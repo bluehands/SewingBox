@@ -23,9 +23,9 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Example.Host.GraphQl", "Exa
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Example.Host.Console", "Example.Host.Console\Example.Host.Console.csproj", "{6730F278-9E26-4887-B403-A61FB3BF2DA6}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Example.Test", "Example\Example.Test\Example.Test.csproj", "{DBF3981C-211C-44F2-B911-66ED0B10C055}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Example.Test", "Example\Example.Test\Example.Test.csproj", "{DBF3981C-211C-44F2-B911-66ED0B10C055}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventSourcing.Test", "EventSourcing.Test\EventSourcing.Test.csproj", "{1C17288A-5675-42C6-A8A8-144075B6D030}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventSourcing.Test", "EventSourcing.Test\EventSourcing.Test.csproj", "{1C17288A-5675-42C6-A8A8-144075B6D030}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

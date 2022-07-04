@@ -11,13 +11,13 @@ using SqlStreamStore.Streams;
 
 namespace EventSourcing.Persistence.SqlStreamStore;
 
-class StreamStoreEventWriter : IEventWriter
+class SqlStreamStoreEventWriter : IEventWriter
 {
 	readonly IStreamStore _eventStore;
-	readonly ILogger<StreamStoreEventWriter> _logger;
+	readonly ILogger<SqlStreamStoreEventWriter> _logger;
 	readonly IEventSerializer<string> _serializer;
 
-	public StreamStoreEventWriter(IStreamStore eventStore, ILogger<StreamStoreEventWriter> logger, IEventSerializer<string> serializer)
+	public SqlStreamStoreEventWriter(IStreamStore eventStore, ILogger<SqlStreamStoreEventWriter> logger, IEventSerializer<string> serializer)
 	{
 		_eventStore = eventStore;
 		_logger = logger;
@@ -30,7 +30,7 @@ class StreamStoreEventWriter : IEventWriter
 			.SelectAsyncSequential(async p =>
 			{
 				var streamId = p.Key;
-				var messages = Enumerable.Select<EventPayload, NewStreamMessage>(p, StreamMessageFromPayload).ToArray();
+				var messages = p.Select(StreamMessageFromPayload).ToArray();
 
 				var results = await _eventStore.AppendToStream(
 					IdTranslation.ToStreamStoreStreamId(streamId), ExpectedVersion.Any, messages);
