@@ -39,7 +39,7 @@ public sealed class CommandStream : IObservable<Command>, IDisposable
 
 public static class CommandStreamExtension
 {
-	public static IDisposable SubscribeCommandProcessors(this IObservable<Command> commands, GetCommandProcessor getCommandProcessor, WriteEvents writeEvents, ILogger? logger) =>
+	public static IDisposable SubscribeCommandProcessors(this IObservable<Command> commands, GetCommandProcessor getCommandProcessor, WriteEvents writeEvents, ILogger logger, WakeUp wakeUp) =>
 		commands
 			.Process(getCommandProcessor, writeEvents)
 			.Do(r => r.LogResult(logger))
@@ -51,10 +51,11 @@ public static class CommandStreamExtension
 				{
 					var commandProcessedEvents = new List<EventPayload> { processingResult.ToCommandProcessedEvent() };
 					await writeEvents(commandProcessedEvents).ConfigureAwait(false);
+					wakeUp.ThereIsWorkToDo();
 				}
 				catch (Exception e)
 				{
-					logger?.LogError(e, "Failed to persist command processed events");
+					logger.LogError(e, "Failed to persist command processed events");
 				}
 			}, logger);
 

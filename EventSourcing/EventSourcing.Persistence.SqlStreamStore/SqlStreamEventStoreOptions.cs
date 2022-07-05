@@ -14,7 +14,7 @@ public abstract class PollingOptions
 {
 	public static readonly PollingOptions NoPolling = new NoPolling_();
 
-	public static PollingOptions UsePolling(PeriodicObservable.PollStrategy<Event, long> pollStrategy) => new UsePolling_(pollStrategy);
+	public static PollingOptions UsePolling(PeriodicObservable.PollStrategy<Event, long> pollStrategy, TimeSpan minPollInterval, TimeSpan maxPollInterval) => new UsePolling_(pollStrategy, minPollInterval, maxPollInterval);
 
 	public class NoPolling_ : PollingOptions
 	{
@@ -26,8 +26,15 @@ public abstract class PollingOptions
 	public class UsePolling_ : PollingOptions
 	{
 		public PeriodicObservable.PollStrategy<Event, long> PollStrategy { get; }
+		public TimeSpan MinPollInterval { get; }
+		public TimeSpan MaxPollInterval { get; }
 
-		public UsePolling_(PeriodicObservable.PollStrategy<Event, long> pollStrategy) : base(UnionCases.UsePolling) => PollStrategy = pollStrategy;
+		public UsePolling_(PeriodicObservable.PollStrategy<Event, long> pollStrategy, TimeSpan minPollInterval, TimeSpan maxPollInterval) : base(UnionCases.UsePolling)
+		{
+			PollStrategy = pollStrategy;
+			MinPollInterval = minPollInterval;
+			MaxPollInterval = maxPollInterval;
+		}
 	}
 
 	internal enum UnionCases

@@ -41,7 +41,7 @@ public class InMemoryEventStore : IEventReader, IEventWriter
 		);
 }
 
-public record InMemoryEventStoryOptions(TimeSpan PollInterval, PeriodicObservable.PollStrategy<Event, long> PollStrategy);
+public record InMemoryEventStoryOptions(TimeSpan MinPollInterval, TimeSpan MaxPollInterval, PeriodicObservable.PollStrategy<Event, long> PollStrategy);
 
 
 public static class ServiceRegistration
@@ -50,7 +50,10 @@ public static class ServiceRegistration
 	{
 		services.AddSingleton<InMemoryEventStore>();
 
-		services.AddEventSourcing(new EventStoreServices(), options ?? new InMemoryEventStoryOptions(TimeSpan.FromMilliseconds(100), new PeriodicObservable.RetryForeverPollStrategy<Event, long>(e => e.Position)));
+		var storeOptions = options ?? new InMemoryEventStoryOptions(TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(30), new PeriodicObservable.RetryForeverPollStrategy<Event, long>(e => e.Position));
+		services.AddSingleton<WakeUp>(provider => new(storeOptions.MinPollInterval, storeOptions.MaxPollInterval, provider.GetRequiredService<ILogger<Event>>()));
+		
+		services.AddEventSourcing(new EventStoreServices(), storeOptions);
 
 		return services;
 	}
@@ -60,11 +63,13 @@ public static class ServiceRegistration
 		public EventStream<Event> BuildEventStream(IServiceProvider provider, InMemoryEventStoryOptions options)
 		{
 			var inMemoryEventStore = provider.GetRequiredService<InMemoryEventStore>();
+			var wakeUp = provider.GetRequiredService<WakeUp>();
+
 			return EventStream.CreateWithPolling(
 				getLastProcessedEventNr: () => Task.FromResult(-1L),
 				getEventNr: e => e.Position,
 				getOrderedNewEvents: fromPositionExclusive => inMemoryEventStore.ReadEvents(fromPositionExclusive + 1),
-				pollInterval: options.PollInterval,
+				wakeUp: wakeUp,
 				getEvents: Task.FromResult,
 				provider.GetRequiredService<ILogger<Event>>(),
 				options.PollStrategy

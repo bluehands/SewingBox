@@ -40,7 +40,7 @@ public static class EventStream
 	public static EventStream<T> CreateWithPolling<TSource, T>(Func<Task<long>> getLastProcessedEventNr,
 		Func<TSource, long> getEventNr,
 		Func<long, Task<IReadOnlyList<TSource>>> getOrderedNewEvents,
-		TimeSpan pollInterval,
+		WakeUp wakeUp,
 		Func<IEnumerable<TSource>, Task<IEnumerable<T>>> getEvents,
 		ILogger logger, 
 		PeriodicObservable.PollStrategy<TSource, long> pollStrategy)
@@ -49,7 +49,7 @@ public static class EventStream
 			getLastProcessedEventNr,
 			getOrderedNewEvents,
 			pollStrategy.GetPollPosition, 
-			pollInterval,
+			wakeUp,
 			Scheduler.Default,
 			logger);
 

@@ -46,6 +46,7 @@ public static class ServiceCollectionExtension
 		if (payloadMapperAssemblies != null)
 			serviceCollection.RegisterPayloadMappers(payloadMapperAssemblies);
 
+		
 		serviceCollection.AddSingleton<ExecuteCommand>(provider => provider.GetRequiredService<CommandStream>().SendCommand);
 		serviceCollection.AddSingleton<ExecuteCommandAndWaitUntilApplied>(provider => (command, processedStream) =>  provider.GetRequiredService<CommandStream>().SendCommandAndWaitUntilApplied(command, processedStream));
 		serviceCollection.AddSingleton<EventStreamFactory>();
@@ -102,6 +103,8 @@ public static class ServiceCollectionExtension
 	{
 		var commandStream = provider.GetRequiredService<CommandStream>();
 		var writeEvents = provider.GetRequiredService<WriteEvents>();
+		var logger = provider.GetRequiredService<ILogger<Event>>();
+		var wakeUp = provider.GetRequiredService<WakeUp>();
 
 		var subscription = commandStream
 			.SubscribeCommandProcessors(
@@ -121,7 +124,7 @@ public static class ServiceCollectionExtension
 
 					return null;
 				},
-				writeEvents, provider.GetService<ILogger<Event>>());
+				writeEvents, logger, wakeUp);
 		return new(subscription);
 	}
 }

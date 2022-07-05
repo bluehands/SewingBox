@@ -15,9 +15,13 @@ public static class TestEnvironment
 
 	static TestEnvironment() =>
 		Services = new ServiceCollection()
-			.AddLogging()
+			.AddLogging(builder => builder
+				.AddConsole()
+				.SetMinimumLevel(LogLevel.Trace)
+				)
 			.BuildServiceProvider();
 }
+
 
 [TestClass]
 public class EventFactorySpecs
@@ -79,7 +83,7 @@ public class PollSpecs
 			() => Task.FromResult(-1L),
 			t => t.position,
 			lastProcessedPosition => GetNewEvents(lastProcessedPosition + 1),
-			TimeSpan.FromMilliseconds(10),
+			new(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(1000), TestEnvironment.Services.GetRequiredService<ILogger<Event>>()),
 			e => Task.FromResult(e),
 			TestEnvironment.Services.GetRequiredService<ILogger<PollSpecs>>(),
 			new PeriodicObservable.RetryNTimesPollStrategy<(string e, long position), long>(t => t.position, 5, l => l+1)

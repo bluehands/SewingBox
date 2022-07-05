@@ -53,7 +53,7 @@ public static class StreamStoreDemoOptions
 	public static readonly SqlStreamEventStoreOptions InMemory = new(
 		CreateSerializer: _ => new JsonEventSerializer(),
 		CreateStore: _ => new InMemoryStreamStore(),
-		PollingOptions: PollingOptions.UsePolling(EventStream.PollStrategyRetryForever), 
+		PollingOptions: PollingOptions.UsePolling(EventStream.PollStrategyRetryForever, TimeSpan.FromSeconds(4), TimeSpan.FromSeconds(5)), 
 		GetLastProcessedEventPosition: () => Task.FromResult(-1L)
 	);
 
@@ -66,7 +66,7 @@ public static class StreamStoreDemoOptions
 			store.CreateSchemaIfNotExists();
 			return store;
 		},
-		PollingOptions: PollingOptions.UsePolling(EventStream.PollStrategyRetryOnFail(5)), 
+		PollingOptions: PollingOptions.UsePolling(EventStream.PollStrategyRetryOnFail(5), TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(5)), 
 		GetLastProcessedEventPosition: () => Task.FromResult(-1L)
 	);
 }

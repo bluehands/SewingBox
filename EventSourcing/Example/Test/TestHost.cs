@@ -14,7 +14,10 @@ public class TestHost
 		var serviceCollection = new ServiceCollection();
 		serviceCollection
 			.AddExampleApp(Persistence.SqlStreamStore(StreamStoreDemoOptions.InMemory))
-			.AddLogging(builder => builder.AddConsole());
+			.AddLogging(builder => builder
+				.AddConsole()
+				.SetMinimumLevel(LogLevel.Trace)
+			);
 
 		Services = serviceCollection.BuildServiceProvider();
 		Services.UseEventSourcing();

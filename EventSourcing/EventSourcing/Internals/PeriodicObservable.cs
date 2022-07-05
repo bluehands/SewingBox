@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace EventSourcing.Internals;
 
-public class PeriodicObservable
+public static class PeriodicObservable
 {
 	public abstract class PollStrategy<TSource, TArg>
 	{
@@ -61,10 +61,10 @@ public class PeriodicObservable
 		Func<Task<TArg>> initialState,
 		Func<TArg, Task<TResult>> poll,
 		Func<TResult, bool, TArg, TArg> deriveNextState,
-		TimeSpan interval,
+		WakeUp wakeUp,
 		IScheduler scheduler,
 		ILogger? logger) =>
-		Observable.Create<TResult>(observer => scheduler.ScheduleAsync(async (ctrl, ct) =>
+		Observable.Create<TResult>(observer => scheduler.ScheduleAsync(async (_, ct) =>
 		{
 			var isFirst = true;
 			var result = default(TResult);
@@ -73,9 +73,13 @@ public class PeriodicObservable
 
 			while (!ct.IsCancellationRequested)
 			{
+				var streamIsHot = false;
 				try
 				{
-					arg = isFirst ? await initialState().ConfigureAwait(false) : deriveNextState(result!, lastPollFailed, arg!);
+					wakeUp.WorkIsScheduled();
+					var nextState = isFirst ? await initialState().ConfigureAwait(false) : deriveNextState(result!, lastPollFailed, arg!);
+					streamIsHot = !Equals(nextState, arg);
+					arg = nextState;
 					result = await poll(arg).ConfigureAwait(false);
 					isFirst = false;
 					observer.OnNext(result);
@@ -88,7 +92,8 @@ public class PeriodicObservable
 				}
 				try
 				{
-					await ctrl.Sleep(interval, ct).ConfigureAwait(false);
+					await wakeUp.WaitForSignalOrUntilTimeout(streamIsHot, ct);
+					//await ctrl.Sleep(interval, ct).ConfigureAwait(false);
 				}
 				catch (OperationCanceledException)
 				{

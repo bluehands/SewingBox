@@ -16,9 +16,16 @@ public static class ServiceRegistration
 		options ??= new(
 			CreateStore: _ => new InMemoryStreamStore(),
 			CreateSerializer: _ => new JsonEventSerializer(),
-			PollingOptions: PollingOptions.UsePolling(new PeriodicObservable.RetryNTimesPollStrategy<Event, long>(e => e.Position, 10, l => l + 1)), 
+			PollingOptions: PollingOptions.UsePolling(
+				pollStrategy: new PeriodicObservable.RetryNTimesPollStrategy<Event, long>(e => e.Position, 10, l => l + 1),
+				minPollInterval: TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(2)), 
 			GetLastProcessedEventPosition: () => Task.FromResult(-1L)
 		);
+
+		if (options.PollingOptions is PollingOptions.UsePolling_ polling)
+		{
+			services.AddSingleton(provider => new WakeUp(polling.MinPollInterval, polling.MaxPollInterval, provider.GetRequiredService<ILogger<Event>>()));
+		}
 
 		services.AddSingleton(options.CreateStore);
 		services.AddTransient<SqlStreamStoreEventReader>();
@@ -36,11 +43,13 @@ public static class ServiceRegistration
 			return options.PollingOptions
 				.Match(usePolling: pollOptions =>
 				{
+					var wakeUp = serviceProvider.GetRequiredService<WakeUp>();
+
 					return EventStream.CreateWithPolling(
 						getLastProcessedEventNr: options.GetLastProcessedEventPosition,
 						getEventNr: e => e.Position,
 						getOrderedNewEvents: versionExclusive => eventReader.ReadEvents(versionExclusive + 1),
-						pollInterval: TimeSpan.FromMilliseconds(100),
+						wakeUp: wakeUp,
 						getEvents: e => Task.FromResult(e),
 						serviceProvider.GetRequiredService<ILogger<Event>>(),
 						pollOptions.PollStrategy
