@@ -13,7 +13,6 @@ Feel free to use the code as starting point for your own es based solution. Simi
 TODOs:
  - example angular client app
  - example for handling concurrency at the projection side as alternative for concurrency handling at persisence side
- - configurable backoff polling with wakeup
  - IAsyncEnumerable
  - read page size configurable for sql stream store
  - efficient logging with [LoggerMessage] generator
