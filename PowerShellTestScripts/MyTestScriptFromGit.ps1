@@ -12,7 +12,7 @@ function TestLibFuncGit {
     $SrxEnv.ResultMessage = $Result
 }
 
-function QRY_TestQueryGit 
+function QRY_TestQueryGit {
   param (
         [string]$StringParam,        
         [string]$StringParam2,        
