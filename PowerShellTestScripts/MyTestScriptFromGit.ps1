@@ -3,6 +3,7 @@
 function TestLibFuncGit {
   param (
         [string]$StringParam,
+        [string]$StringParam2,
         [Int]$IntParam,
         [string]$Result
     )
