@@ -7,7 +7,23 @@ using SqlStreamStore;
 
 namespace EventSourcing.Persistence.SqlStreamStore;
 
-public record SqlStreamEventStoreOptions(Func<IServiceProvider, IStreamStore> CreateStore, Func<IServiceProvider, IEventSerializer<string>> CreateSerializer, PollingOptions PollingOptions, Func<Task<long>> GetLastProcessedEventPosition);
+/// <summary>
+/// Options to use sql stream store package as underlying event store
+/// </summary>
+/// <param name="CreateStore">
+/// If left empty IStreamStore has to be added to di container externally
+/// </param> 
+/// <param name="CreateSerializer">
+/// If left empty IEventSerializer&lt;string&gt; has to be added to di container externally
+/// </param>
+/// <param name="PollingOptions"></param>
+/// <param name="GetLastProcessedEventPosition"></param>
+public record SqlStreamEventStoreOptions(
+	Func<IServiceProvider, IStreamStore>? CreateStore,
+	Func<IServiceProvider, IEventSerializer<string>>? CreateSerializer,
+	PollingOptions PollingOptions,
+	Func<Task<long>> GetLastProcessedEventPosition
+);
 
 [UnionType(CaseOrder = CaseOrder.AsDeclared)]
 public abstract class PollingOptions
