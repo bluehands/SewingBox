@@ -1,4 +1,5 @@
 ﻿using EventSourcing.Events;
+using EventSourcing.Persistence.Serialization;
 using EventSourcing.Persistence.SqlStreamStore;
 using SqlStreamStore;
 

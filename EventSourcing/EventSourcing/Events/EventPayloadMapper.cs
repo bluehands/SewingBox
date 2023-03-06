@@ -50,7 +50,7 @@ public abstract class EventPayloadMapper
 			{
 				if (_.att == null)
 					throw new ArgumentException(
-						$"Type {_.t.GetArgumentOfFirstGenericBaseType().BeautifulName()} is used as payload type in PayloadMapper {_.t.BeautifulName()}. It has to be marked with EvenPayloadAttribute.");
+						$"Type {_.t.GetArgumentOfFirstGenericBaseType().BeautifulName()} is used as payload type in PayloadMapper {_.t.BeautifulName()}. It has to be marked with {nameof(SerializedEventPayloadAttribute)}.");
 
 				return _.att != null;
 			})

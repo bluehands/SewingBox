@@ -3,6 +3,7 @@ using System.Reactive.Linq;
 using System.Threading.Tasks;
 using EventSourcing.Events;
 using EventSourcing.Internals;
+using EventSourcing.Persistence.Serialization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SqlStreamStore;
@@ -90,11 +91,4 @@ public static class ServiceRegistration
 				services.AddTransient(options.CreateSerializer);
 		}
 	}
-}
-
-public class JsonEventSerializer : IEventSerializer<string>
-{
-	public string Serialize(object serializablePayload) => System.Text.Json.JsonSerializer.Serialize(serializablePayload);
-
-	public object Deserialize(Type serializablePayloadType, string serializedPayload) => System.Text.Json.JsonSerializer.Deserialize(serializedPayload, serializablePayloadType)!;
 }

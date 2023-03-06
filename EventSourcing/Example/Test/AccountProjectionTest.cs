@@ -1,9 +1,8 @@
-﻿using System.Collections.Immutable;
-using EventSourcing.Events;
+﻿using System.Reactive.Linq;
+using EventSourcing;
 using Example.Domain.Events;
 using Example.Domain.Projections;
 using FluentAssertions;
-using FunicularSwitch.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using StreamIds = Example.Domain.Events.StreamIds;
@@ -14,7 +13,7 @@ namespace Example.Test;
 public class AccountProjectionTest
 {
 	[TestMethod]
-	public void WhenTransferringMoneyFromOneAccountToAnother()
+	public async Task WhenTransferringMoneyFromOneAccountToAnother()
 	{
 		const string account1 = "Account_1";
 		const string account2 = "Account_2";
@@ -26,25 +25,14 @@ public class AccountProjectionTest
 			new PaymentReceived(account2, 20),
 		};
 
-		var accountsById = Project(myEventSequence);
+		var accounts = TestHost.Instance.Services.GetRequiredService<Accounts>();
+		var allApplied = accounts.AppliedEventStream.Take(myEventSequence.Length);
+		await TestHost.Instance.Services.GetRequiredService<IEventWriter>().WriteEvents(myEventSequence);
+		await allApplied;
 
-		accountsById[StreamIds.Account(account1)].Balance.Should().Be(80);
-		accountsById[StreamIds.Account(account2)].Balance.Should().Be(220);
-	}
+		(await GetAccount(account1)).Balance.Should().Be(80);
+		(await GetAccount(account2)).Balance.Should().Be(220);
 
-	static ImmutableDictionary<StreamId, Account> Project(IEnumerable<AccountPayload> myEventSequence)
-	{
-		var projection = TestHost.Instance.Services.GetRequiredService<AccountProjection>();
-
-		var accountsById = myEventSequence
-			.Aggregate(
-				ImmutableDictionary<StreamId, Account>.Empty,
-				(accounts, @event) =>
-				{
-					var updated = projection.Apply(accounts.TryGetValue(@event.StreamId), @event);
-					return updated.Match(u => accounts.SetItem(@event.StreamId, u),
-						() => accounts.Remove(@event.StreamId));
-				});
-		return accountsById;
+		async Task<Account> GetAccount(string account) => (await accounts.Get(StreamIds.Account(account))).GetValueOrThrow();
 	}
 }

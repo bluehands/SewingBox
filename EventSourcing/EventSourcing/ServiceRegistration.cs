@@ -9,6 +9,8 @@ using Microsoft.Extensions.Logging;
 
 namespace EventSourcing;
 
+//TODO: IAsyncEnumerable how was up and optionally catch deserialize event error
+
 public static class StartUpExtensions
 {
 	public static void UseEventSourcing(this IServiceProvider serviceProvider)
