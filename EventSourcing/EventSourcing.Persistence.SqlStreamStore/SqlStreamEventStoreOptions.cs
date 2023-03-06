@@ -3,27 +3,21 @@ using System.Threading.Tasks;
 using EventSourcing.Events;
 using EventSourcing.Internals;
 using FunicularSwitch.Generators;
-using SqlStreamStore;
 
 namespace EventSourcing.Persistence.SqlStreamStore;
 
-/// <summary>
-/// Options to use sql stream store package as underlying event store
-/// </summary>
-/// <param name="CreateStore">
-/// If left empty IStreamStore has to be added to di container externally
-/// </param> 
-/// <param name="CreateSerializer">
-/// If left empty IEventSerializer&lt;string&gt; has to be added to di container externally
-/// </param>
-/// <param name="PollingOptions"></param>
-/// <param name="GetLastProcessedEventPosition"></param>
 public record SqlStreamEventStoreOptions(
-	Func<IServiceProvider, IStreamStore>? CreateStore,
-	Func<IServiceProvider, IEventSerializer<string>>? CreateSerializer,
 	PollingOptions PollingOptions,
 	Func<Task<long>> GetLastProcessedEventPosition
-);
+)
+{
+	public static SqlStreamEventStoreOptions Create(PollingOptions? pollingOptions = null, Func<Task<long>>? getLastProcessedEventPosition = null) =>
+		new(
+			pollingOptions ?? PollingOptions.UsePolling(EventStream.PollStrategyRetryOnFail(5),
+				TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(2)),
+			 getLastProcessedEventPosition ?? (() => Task.FromResult(-1L))
+		);
+}
 
 [UnionType(CaseOrder = CaseOrder.AsDeclared)]
 public abstract class PollingOptions

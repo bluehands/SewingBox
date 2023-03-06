@@ -4,43 +4,47 @@ using EventSourcing.Events;
 using EventSourcing.Internals;
 using EventSourcing.Persistence.Serialization;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 
 namespace EventSourcing.Persistence.SQLite;
 
-public record SQLiteEventStoryOptions(
-	string ConnectionString, 
-	TimeSpan MinPollInterval, 
-	TimeSpan MaxPollInterval, 
-	PeriodicObservable.PollStrategy<Event, long> PollStrategy,
-	Func<IServiceProvider, IEventSerializer<string>>? CreateSerializer);
-
+public record SQLiteEventStoreOptions(
+	string ConnectionString,
+	TimeSpan MinPollInterval,
+	TimeSpan MaxPollInterval,
+	PeriodicObservable.PollStrategy<Event, long> PollStrategy)
+{
+	public static SQLiteEventStoreOptions Create(
+		string connectionString, 
+		TimeSpan? minPollInterval = null, 
+		TimeSpan? maxPollInterval = null, 
+		PeriodicObservable.PollStrategy<Event, long>? pollStrategy = null) =>
+		new(
+			connectionString,
+			minPollInterval ?? TimeSpan.FromMilliseconds(100),
+			maxPollInterval ?? TimeSpan.FromSeconds(30),
+			pollStrategy ?? new PeriodicObservable.RetryNTimesPollStrategy<Event, long>(e => e.Position, 10, position => position + 1)
+		);
+}
 
 public static class ServiceRegistration
 {
-	public static IServiceCollection AddSQLiteEventStore(this IServiceCollection services, SQLiteEventStoryOptions? options = null)
+	public static IServiceCollection AddSQLiteEventStore(this IServiceCollection services, SQLiteEventStoreOptions options)
 	{
-		var storeOptions = options ?? new SQLiteEventStoryOptions(
-			"file::memory:?cache=shared",
-			TimeSpan.FromMilliseconds(100),
-			TimeSpan.FromSeconds(30),
-			new PeriodicObservable.RetryForeverPollStrategy<Event, long>(e => e.Position),
-			_ => new JsonEventSerializer()
-		);
-
-		services.AddSingleton(_ => new SQLiteExecutor(storeOptions.ConnectionString));
+		services.AddSingleton(_ => new SQLiteExecutor(options.ConnectionString));
 		services.AddSingleton<SQLiteEventStore>();
 
-		services.AddSingleton<WakeUp>(provider => new(storeOptions.MinPollInterval, storeOptions.MaxPollInterval, provider.GetRequiredService<ILogger<Event>>()));
+		services.AddSingleton<WakeUp>(provider => new(options.MinPollInterval, options.MaxPollInterval, provider.GetRequiredService<ILogger<Event>>()));
 		
-		services.AddEventSourcing(new EventStoreServices(), storeOptions);
+		services.AddEventSourcing(new EventStoreServices(), options);
 
 		return services;
 	}
 
-	class EventStoreServices : IEventStoreServiceRegistration<SQLiteEventStoryOptions>
+	class EventStoreServices : IEventStoreServiceRegistration<SQLiteEventStoreOptions>
 	{
-		public EventStream<Event> BuildEventStream(IServiceProvider provider, SQLiteEventStoryOptions options)
+		public EventStream<Event> BuildEventStream(IServiceProvider provider, SQLiteEventStoreOptions options)
 		{
 			var inMemoryEventStore = provider.GetRequiredService<SQLiteEventStore>();
 			var wakeUp = provider.GetRequiredService<WakeUp>();
@@ -56,20 +60,13 @@ public static class ServiceRegistration
 			);
 		}
 
-		public void AddEventReader(IServiceCollection services, SQLiteEventStoryOptions options)
-		{
-			services.AddTransient<IEventReader>(provider => provider.GetRequiredService<SQLiteEventStore>());
-		}
+		public void AddEventReader(IServiceCollection services, SQLiteEventStoreOptions options)
+			=> services.AddTransient<IEventReader>(provider => provider.GetRequiredService<SQLiteEventStore>());
 
-		public void AddEventWriter(IServiceCollection services, SQLiteEventStoryOptions options)
-		{
+		public void AddEventWriter(IServiceCollection services, SQLiteEventStoreOptions options) => 
 			services.AddTransient<IEventWriter>(provider => provider.GetRequiredService<SQLiteEventStore>());
-		}
 
-		public void AddEventSerializer(IServiceCollection services, SQLiteEventStoryOptions options)
-		{
-			if (options.CreateSerializer != null)
-				services.AddTransient(options.CreateSerializer);
-		}
+		public void AddEventSerializer(IServiceCollection services, SQLiteEventStoreOptions options) => 
+			services.TryAddTransient<IEventSerializer<string>, JsonEventSerializer>();
 	}
 }

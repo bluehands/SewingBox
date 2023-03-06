@@ -7,8 +7,8 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="FunicularSwitch" Version="3.0.6" />
-    <PackageReference Include="System.Collections.Immutable" Version="6.0.0" />
+    <PackageReference Include="FunicularSwitch" Version="4.0.0" />
+    <PackageReference Include="System.Collections.Immutable" Version="7.0.0" />
   </ItemGroup>
 
   <ItemGroup>

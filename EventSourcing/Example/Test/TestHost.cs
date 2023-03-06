@@ -12,6 +12,7 @@ public class TestHost
 	public TestHost()
 	{
 		var serviceCollection = new ServiceCollection();
+
 		serviceCollection
 			.AddExampleApp(Persistence.InMemoryNoMappers)
 			.AddLogging(builder => builder
@@ -20,6 +21,7 @@ public class TestHost
 			);
 
 		Services = serviceCollection.BuildServiceProvider();
+
 		Services.UseEventSourcing();
 	}
 

@@ -84,7 +84,7 @@ public class PollSpecs
 			t => t.position,
 			lastProcessedPosition => GetNewEvents(lastProcessedPosition + 1),
 			new(TimeSpan.FromMilliseconds(100), TimeSpan.FromMilliseconds(1000), TestEnvironment.Services.GetRequiredService<ILogger<Event>>()),
-			e => Task.FromResult(e),
+			Task.FromResult,
 			TestEnvironment.Services.GetRequiredService<ILogger<PollSpecs>>(),
 			new PeriodicObservable.RetryNTimesPollStrategy<(string e, long position), long>(t => t.position, 5, l => l+1)
 		);

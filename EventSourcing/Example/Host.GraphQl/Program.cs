@@ -4,8 +4,11 @@ using Example.Host.GraphQl;
 
 var builder = WebApplication.CreateBuilder(args);
 
+//var persistenceOption = Persistence.MsSqlStreamStore(StreamStoreDemoOptions.LocalSqlExpress);
+var persistenceOption = Persistence.SQLite(@"DataSource=c:\temp\es.db");
+
 builder.Services
-	.AddExampleApp(Persistence.SqlStreamStore(StreamStoreDemoOptions.LocalSqlExpress))
+	.AddExampleApp(persistenceOption)
 	.AddGraphQLServer()
 	.AddQueryType<Query>()
 	.AddMutationType<Mutation>()

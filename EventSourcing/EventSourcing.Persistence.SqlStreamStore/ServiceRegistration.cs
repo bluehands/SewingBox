@@ -5,6 +5,7 @@ using EventSourcing.Events;
 using EventSourcing.Internals;
 using EventSourcing.Persistence.Serialization;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using SqlStreamStore;
 
@@ -14,22 +15,14 @@ public static class ServiceRegistration
 {
 	public static IServiceCollection AddSqlStreamEventStore(this IServiceCollection services, SqlStreamEventStoreOptions? options = null)
 	{
-		options ??= new(
-			CreateStore: _ => new InMemoryStreamStore(),
-			CreateSerializer: _ => new JsonEventSerializer(),
-			PollingOptions: PollingOptions.UsePolling(
-				pollStrategy: new PeriodicObservable.RetryNTimesPollStrategy<Event, long>(e => e.Position, 10, l => l + 1),
-				minPollInterval: TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(2)),
-			GetLastProcessedEventPosition: () => Task.FromResult(-1L)
-		);
+		options ??= SqlStreamEventStoreOptions.Create();
 
 		if (options.PollingOptions is PollingOptions.UsePolling_ polling)
 		{
 			services.AddSingleton(provider => new WakeUp(polling.MinPollInterval, polling.MaxPollInterval, provider.GetRequiredService<ILogger<Event>>()));
 		}
 
-		if (options.CreateStore != null)
-			services.AddSingleton(options.CreateStore);
+		services.TryAddSingleton<IStreamStore, InMemoryStreamStore>();
 		services.AddTransient<SqlStreamStoreEventReader>();
 
 		services.AddEventSourcing(new StreamStoreServices(), options);
@@ -85,10 +78,7 @@ public static class ServiceRegistration
 		public void AddEventWriter(IServiceCollection services, SqlStreamEventStoreOptions options) => 
 			services.AddTransient<IEventWriter, SqlStreamStoreEventWriter>();
 
-		public void AddEventSerializer(IServiceCollection services, SqlStreamEventStoreOptions options)
-		{
-			if (options.CreateSerializer != null)
-				services.AddTransient(options.CreateSerializer);
-		}
+		public void AddEventSerializer(IServiceCollection services, SqlStreamEventStoreOptions options) => 
+			services.TryAddTransient<IEventSerializer<string>, JsonEventSerializer>();
 	}
 }

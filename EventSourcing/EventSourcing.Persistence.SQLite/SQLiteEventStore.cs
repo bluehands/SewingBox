@@ -4,7 +4,6 @@ using System.Data.SQLite;
 using System.Linq;
 using System.Threading.Tasks;
 using EventSourcing.Events;
-using FunicularSwitch.Extensions;
 
 namespace EventSourcing.Persistence.SQLite;
 
@@ -22,7 +21,7 @@ public class SQLiteEventStore : IEventReader, IEventWriter
 	public Task<IEnumerable<Event>> ReadEvents(StreamId streamId, long upToPositionExclusive) => _executor.Execute(async con =>
 	{
 		var eventsFromDb = con.ReadEvents(streamId.StreamType, streamId.Id, upToPositionExclusive);
-		return (IEnumerable<Event>) await eventsFromDb.Select(Map).ToListAsync();
+		return (await eventsFromDb).Select(Map);
 
 	});
 
@@ -33,7 +32,12 @@ public class SQLiteEventStore : IEventReader, IEventWriter
 		return EventFactory.EventFromPayload(payload, @event.Version, new(@event.Timestamp, TimeSpan.Zero), false);
 	}
 
-	public async Task<IReadOnlyList<Event>> ReadEvents(long fromPositionInclusive) => await _executor.Execute(async con => await con.ReadEvents(fromPositionInclusive).Select(Map).ToListAsync());
+	public async Task<IReadOnlyList<Event>> ReadEvents(long fromPositionInclusive) => 
+		await _executor.Execute(async con =>
+		{
+			var readOnlyList = (await con.ReadEvents(fromPositionInclusive)).Select(Map).ToList();
+			return readOnlyList;
+		});
 
 	public Task WriteEvents(IReadOnlyCollection<EventPayload> payloads) => _executor.Execute(con =>
 		con.WriteEvents(payloads
@@ -43,23 +47,6 @@ public class SQLiteEventStore : IEventReader, IEventWriter
 				p.EventType,
 				_eventSerializer.Serialize(EventPayloadMapper.MapToSerializablePayload(p)))))
 	);
-}
-
-public class SQLiteExecutor
-{
-	public string ConnectionString { get; }
-
-	public SQLiteExecutor(string connectionString) => ConnectionString = connectionString;
-
-	public Task Execute(Func<SQLiteConnection, Task> action)
-		=> Execute(action.ToFunc());
-
-	public async Task<T> Execute<T>(Func<SQLiteConnection, Task<T>> func)
-	{
-		using var connection = new SQLiteConnection(ConnectionString);
-		await connection.OpenAsync();
-		return await func(connection);
-	}
 }
 
 static class SQLiteEventsExtension
@@ -92,22 +79,22 @@ static class SQLiteEventsExtension
 		await dbConnection.ExecuteNonQuery(@"create index idx_streamtype_streamid on events (streamtype, streamid);");
 	}
 
-	public static IAsyncEnumerable<Event> ReadEvents(this SQLiteConnection connection, long fromPositionInclusive)
+	public static async Task<List<Event>> ReadEvents(this SQLiteConnection connection, long fromPositionInclusive)
 	{
 		const string sql = "select rowid, streamtype, streamid, type, payload, timestamp from events where rowid >= $fromPositionInclusive order by rowid asc";
 		using var query = new SQLiteCommand(sql, connection);
 		query.Parameters.AddWithValue("$fromPositionInclusive", fromPositionInclusive);
-		return ReadRows(query);
+		return await ReadRows(query).ToListAsync();
 	}
 
-	public static IAsyncEnumerable<Event> ReadEvents(this SQLiteConnection connection, string streamType, string streamId, long upToPositionExclusive)
+	public static async Task<List<Event>> ReadEvents(this SQLiteConnection connection, string streamType, string streamId, long upToPositionExclusive)
 	{
 		const string sql = "select rowid, streamtype, streamid, type, payload, timestamp from events where streamType == $streamType and streamId == $streamId and rowid < $upToVersionExclusive order by rowid asc";
 		using var query = new SQLiteCommand(sql, connection);
 		query.Parameters.AddWithValue("$upToVersionExclusive", upToPositionExclusive);
 		query.Parameters.AddWithValue("$streamType", streamType);
 		query.Parameters.AddWithValue("$streamId", streamId);
-		return ReadRows(query);
+		return await ReadRows(query).ToListAsync();
 	}
 
 	static async IAsyncEnumerable<Event> ReadRows(SQLiteCommand query)
