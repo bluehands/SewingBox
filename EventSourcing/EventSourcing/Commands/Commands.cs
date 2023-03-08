@@ -1,11 +1,12 @@
 ﻿using System.Collections.Immutable;
 using EventSourcing.Events;
+using EventSourcing.Internals;
 using FunicularSwitch.Extensions;
 using FunicularSwitch.Generators;
 
 namespace EventSourcing.Commands;
 
-public delegate CommandProcessor? GetCommandProcessor(Type commandType);
+public delegate ScopedCommandProcessor GetCommandProcessor(Type commandType);
 
 public abstract record Command
 {
@@ -26,7 +27,8 @@ public abstract class CommandProcessor
 	{
 		try
 		{
-			var commandProcessor = getCommandProcessor(command.GetType());
+			using var scopedCommandProcessor = getCommandProcessor(command.GetType());
+            var commandProcessor = scopedCommandProcessor.Processor;
 			var processingResult = commandProcessor != null ?
 				await commandProcessor.Process(command).ConfigureAwait(false) :
 				ProcessingResult.Unhandled(command.Id, $"No command processor registered for command {command.GetType().Name}");
