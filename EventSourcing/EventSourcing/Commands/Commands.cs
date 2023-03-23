@@ -6,7 +6,7 @@ using FunicularSwitch.Generators;
 
 namespace EventSourcing.Commands;
 
-public delegate ScopedCommandProcessor GetCommandProcessor(Type commandType);
+public delegate ScopedCommandProcessor? GetCommandProcessor(Type commandType);
 
 public abstract record Command
 {
@@ -28,9 +28,8 @@ public abstract class CommandProcessor
 		try
 		{
 			using var scopedCommandProcessor = getCommandProcessor(command.GetType());
-            var commandProcessor = scopedCommandProcessor.Processor;
-			var processingResult = commandProcessor != null ?
-				await commandProcessor.Process(command).ConfigureAwait(false) :
+			var processingResult = scopedCommandProcessor != null ?
+				await scopedCommandProcessor.Processor.Process(command).ConfigureAwait(false) :
 				ProcessingResult.Unhandled(command.Id, $"No command processor registered for command {command.GetType().Name}");
 			return processingResult;
 		}

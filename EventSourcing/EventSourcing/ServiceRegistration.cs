@@ -114,8 +114,8 @@ public static class ServiceCollectionExtension
 					try
 					{
 						var scope = provider.CreateScope();
-						var processor = (CommandProcessor?)scope.ServiceProvider.GetService(commandProcessorType);
-                        return new ScopedCommandProcessor(processor, scope);
+						var processor = (CommandProcessor)scope.ServiceProvider.GetService(commandProcessorType);
+                        return new(processor, scope);
                     }
 					catch (Exception e)
 					{

@@ -1,19 +1,18 @@
 ﻿using EventSourcing.Commands;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace EventSourcing.Internals;
 
 public sealed class ScopedCommandProcessor : IDisposable
 {
-    private readonly IServiceScope scope;
+	readonly IDisposable _scope;
 
-    public ScopedCommandProcessor(CommandProcessor? processor, IServiceScope scope)
+    public ScopedCommandProcessor(CommandProcessor processor, IDisposable scope)
     {
-        this.Processor = processor;
-        this.scope = scope;
+        Processor = processor;
+        _scope = scope;
     }
 
-    public CommandProcessor? Processor { get; }
+    public CommandProcessor Processor { get; }
 
-    public void Dispose() => this.scope.Dispose();
+    public void Dispose() => _scope.Dispose();
 }
