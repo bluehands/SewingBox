@@ -73,5 +73,5 @@ public static class EventStream
 	public static EventStream<T> Create<T>(IObservable<T> events) => new(events);
 
 	public static PeriodicObservable.PollStrategy<Event, long> PollStrategyRetryOnFail(int retryCount) => new PeriodicObservable.RetryNTimesPollStrategy<Event, long>(e => e.Position, retryCount, l => l + 1);
-	public static PeriodicObservable.PollStrategy<Event, long> PollStrategyRetryForever = new PeriodicObservable.RetryForeverPollStrategy<Event, long>(e => e.Position);
+	public static readonly PeriodicObservable.PollStrategy<Event, long> PollStrategyRetryForever = new PeriodicObservable.RetryForeverPollStrategy<Event, long>(e => e.Position);
 }

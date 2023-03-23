@@ -94,7 +94,7 @@ public static class ServiceCollectionExtension
 			});
 
 		foreach (var (serviceType, implementationType) in tuples)
-			serviceCollection.Add(ServiceDescriptor.Describe(serviceType, implementationType, ServiceLifetime.Scoped));
+			serviceCollection.Add(ServiceDescriptor.Describe(serviceType, implementationType, ServiceLifetime.Transient));
 
 		return serviceCollection;
 	}
@@ -110,12 +110,13 @@ public static class ServiceCollectionExtension
 			.SubscribeCommandProcessors(
 				commandType =>
 				{
-					var commandProcessorType = typeof(CommandProcessor<>).MakeGenericType(commandType);
+                    var commandProcessorType = typeof(CommandProcessor<>).MakeGenericType(commandType);
 					try
 					{
-						using var scope = provider.CreateScope();
-						return (CommandProcessor)scope.ServiceProvider.GetService(commandProcessorType);
-					}
+						var scope = provider.CreateScope();
+						var processor = (CommandProcessor)scope.ServiceProvider.GetService(commandProcessorType);
+                        return new(processor, scope);
+                    }
 					catch (Exception e)
 					{
 						provider.GetService<ILogger<Event>>()?.LogError(e,

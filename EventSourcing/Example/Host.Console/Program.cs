@@ -1,5 +1,6 @@
 ﻿using EventSourcing;
 using EventSourcing.Commands;
+using EventSourcing.Persistence.SQLite;
 using Example.Domain.Commands;
 using Example.Domain.Projections;
 using Example.Host;
@@ -11,11 +12,16 @@ using Microsoft.Extensions.Logging;
 using var host = Host.CreateDefaultBuilder()
 	.ConfigureServices(serviceCollection =>
 	{
-		serviceCollection.AddExampleApp(Persistence.SqlStreamStore(StreamStoreDemoOptions.LocalSqlExpress));
+		//var persistenceOption = Persistence.MsSqlStreamStore(StreamStoreDemoOptions.LocalSqlExpress);
+		var persistenceOption = Persistence.SQLite(@"DataSource=c:\temp\es.db");
+
+		serviceCollection.AddExampleApp(persistenceOption);
 		serviceCollection.AddTransient<SampleService>();
 	})
 	.ConfigureLogging(builder => builder.AddConsole())
 	.Build();
+
+host.Services.GetRequiredService<SQLiteExecutor>().AssertEventSchema();
 
 host.Services.GetRequiredService<Accounts>().AppliedEventStream.Subscribe(t =>
 	Console.WriteLine($"Balance of {t.projection.Owner}s account changed: {t.projection.Balance}"));

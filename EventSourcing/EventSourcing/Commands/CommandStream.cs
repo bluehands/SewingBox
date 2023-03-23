@@ -27,8 +27,7 @@ public sealed class CommandStream : IObservable<Command>, IDisposable
 
 	public async Task SendCommand(Command command) => await _lock.ExecuteGuarded(() => _innerStream.OnNext(command)).ConfigureAwait(false);
 
-	// ReSharper disable once ParameterHidesMember
-	public Task SendCommands(IEnumerable<Command> commands) => Task.WhenAll(commands.Select(c => SendCommand(c)));
+	public Task SendCommands(IEnumerable<Command> commands) => Task.WhenAll(commands.Select(SendCommand));
 
 	public void Dispose()
 	{

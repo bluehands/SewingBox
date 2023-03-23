@@ -39,7 +39,7 @@ public abstract class ProjectionCache<T> : IDisposable
 		_eventPredicate = eventPredicate;
 
 		SeenEvents = events
-			.SelectManyPreserveOrder(@event => ApplyEvent(@event), logger, 1)
+			.SelectManyPreserveOrder(ApplyEvent, logger, 1)
 			.Publish()
 			.RefCount();
 

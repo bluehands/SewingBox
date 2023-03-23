@@ -12,14 +12,16 @@ public class TestHost
 	public TestHost()
 	{
 		var serviceCollection = new ServiceCollection();
+
 		serviceCollection
-			.AddExampleApp(Persistence.SqlStreamStore(StreamStoreDemoOptions.InMemory))
+			.AddExampleApp(Persistence.InMemoryNoMappers)
 			.AddLogging(builder => builder
 				.AddConsole()
 				.SetMinimumLevel(LogLevel.Trace)
 			);
 
 		Services = serviceCollection.BuildServiceProvider();
+
 		Services.UseEventSourcing();
 	}
 
