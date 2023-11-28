@@ -7,3 +7,4 @@ packages/
 .vs/
 /**/*.user
 /ParallelAsync/DoubleCheckedLock/BenchmarkDotNet.Artifacts
+.idea/
