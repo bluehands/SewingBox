@@ -129,7 +129,17 @@ namespace EventSourcing
             switch (this)
             {
                 case Ok_ ok:
-                    return bind(ok.Value);
+	                try
+	                {
+		                return bind(ok.Value);
+	                }
+	                // ReSharper disable once RedundantCatchClause
+#pragma warning disable CS0168 // Variable is declared but never used
+	                catch (Exception e)
+#pragma warning restore CS0168 // Variable is declared but never used
+	                {
+		                throw; //createGenericErrorResult
+	                }
                 case Error_ error:
                     return error.Convert<T1>();
                 default:
@@ -142,7 +152,17 @@ namespace EventSourcing
             switch (this)
             {
                 case Ok_ ok:
-                    return await bind(ok.Value).ConfigureAwait(false);
+	                try
+	                {
+		                return await bind(ok.Value).ConfigureAwait(false);
+	                }
+	                // ReSharper disable once RedundantCatchClause
+#pragma warning disable CS0168 // Variable is declared but never used
+	                catch (Exception e)
+#pragma warning restore CS0168 // Variable is declared but never used
+	                {
+		                throw; //createGenericErrorResult
+	                }
                 case Error_ error:
                     return error.Convert<T1>();
                 default:
@@ -313,6 +333,18 @@ namespace EventSourcing
 
         public static OperationResult<T1> As<T1>(this OperationResult<object> result, Func<Failure> errorIsNotT1) =>
             result.As<object, T1>(errorIsNotT1);
+        
+        #region query-expression pattern
+        
+        public static OperationResult<T1> Select<T, T1>(this OperationResult<T> result, Func<T, T1> selector) => result.Map(selector);
+        public static Task<OperationResult<T1>> Select<T, T1>(this Task<OperationResult<T>> result, Func<T, T1> selector) => result.Map(selector);
+        
+        public static OperationResult<T2> SelectMany<T, T1, T2>(this OperationResult<T> result, Func<T, OperationResult<T1>> selector, Func<T, T1, T2> resultSelector) => result.Bind(t => selector(t).Map(t1 => resultSelector(t, t1)));
+        public static Task<OperationResult<T2>> SelectMany<T, T1, T2>(this Task<OperationResult<T>> result, Func<T, Task<OperationResult<T1>>> selector, Func<T, T1, T2> resultSelector) => result.Bind(t => selector(t).Map(t1 => resultSelector(t, t1)));
+        public static Task<OperationResult<T2>> SelectMany<T, T1, T2>(this Task<OperationResult<T>> result, Func<T, OperationResult<T1>> selector, Func<T, T1, T2> resultSelector) => result.Bind(t => selector(t).Map(t1 => resultSelector(t, t1)));
+        public static Task<OperationResult<T2>> SelectMany<T, T1, T2>(this OperationResult<T> result, Func<T, Task<OperationResult<T1>>> selector, Func<T, T1, T2> resultSelector) => result.Bind(t => selector(t).Map(t1 => resultSelector(t, t1)));
+
+        #endregion
     }
 }
 

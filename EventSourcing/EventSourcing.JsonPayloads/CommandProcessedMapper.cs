@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Immutable;
 using System.Linq;
+using EventSourcing.Commands;
 using EventSourcing.Events;
 using FunicularSwitch;
 
@@ -26,20 +27,20 @@ public class CommandProcessedMapper : EventPayloadMapper<CommandProcessed, Event
 			Failure.UnionCases.Internal => Commands.Failure.Internal(message: message!),
 			Failure.UnionCases.InvalidInput => Commands.Failure.InvalidInput(message: message!),
 			Failure.UnionCases.NotFound => Commands.Failure.NotFound(message: message!),
-			Failure.UnionCases.Multiple => Commands.Failure.Multiple(failures: childFailures!.Select(f => Map(f)).ToImmutableArray()),
+			Failure.UnionCases.Multiple => Commands.Failure.Multiple(failures: childFailures!.Select(Map).ToImmutableArray()),
 			_ => throw new ArgumentOutOfRangeException()
 		};
 	}
 
 	static Failure Map(Commands.Failure failure) =>
-		Commands.MatchExtension.Match(failure,
+		failure.Match(
 			cancelled: _ => new(UnionCase: Failure.UnionCases.Cancelled, Message: failure.Message),
 			conflict: _ => new(UnionCase: Failure.UnionCases.Conflict, Message: failure.Message),
 			forbidden: _ => new(UnionCase: Failure.UnionCases.Forbidden, Message: failure.Message),
 			@internal: _ => new(UnionCase: Failure.UnionCases.Internal, Message: failure.Message),
 			invalidInput: _ => new(UnionCase: Failure.UnionCases.InvalidInput, Message: failure.Message),
 			notFound: _ => new (UnionCase: Failure.UnionCases.NotFound, Message: failure.Message),
-			multiple: m => new Failure(UnionCase: Failure.UnionCases.Multiple, Message: null, m.Failures.Select(f => Map(f)).ToImmutableArray())
+			multiple: m => new Failure(UnionCase: Failure.UnionCases.Multiple, Message: null, m.Failures.Select(Map).ToImmutableArray())
 		);
 
 	protected override CommandProcessed MapToSerializablePayload(Events.CommandProcessed payload) => new(

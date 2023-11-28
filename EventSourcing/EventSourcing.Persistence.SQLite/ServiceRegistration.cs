@@ -46,13 +46,13 @@ public static class ServiceRegistration
 	{
 		public EventStream<Event> BuildEventStream(IServiceProvider provider, SQLiteEventStoreOptions options)
 		{
-			var inMemoryEventStore = provider.GetRequiredService<SQLiteEventStore>();
+			var eventStore = provider.GetRequiredService<SQLiteEventStore>();
 			var wakeUp = provider.GetRequiredService<WakeUp>();
 
 			return EventStream.CreateWithPolling(
 				getLastProcessedEventNr: () => Task.FromResult(-1L),
 				getEventNr: e => e.Position,
-				getOrderedNewEvents: fromPositionExclusive => inMemoryEventStore.ReadEvents(fromPositionExclusive + 1),
+				getOrderedNewEvents: fromPositionExclusive => eventStore.ReadEvents(fromPositionExclusive + 1),
 				wakeUp: wakeUp,
 				getEvents: Task.FromResult,
 				provider.GetRequiredService<ILogger<Event>>(),

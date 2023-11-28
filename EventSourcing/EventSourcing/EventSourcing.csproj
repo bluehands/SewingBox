@@ -20,8 +20,8 @@
 	</Target>
 
 	<ItemGroup>
-		<PackageReference Include="FunicularSwitch" Version="4.0.0" />
-		<PackageReference Include="FunicularSwitch.Generators" Version="1.4.2" />
+		<PackageReference Include="FunicularSwitch" Version="5.0.0" />
+		<PackageReference Include="FunicularSwitch.Generators" Version="3.0.0" />
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0" />
 		<PackageReference Include="Nito.AsyncEx" Version="5.1.2" />
