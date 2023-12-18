@@ -109,7 +109,7 @@ public abstract class ProjectionCache<T> : IDisposable
 		return state;
 	}
 
-	public async Task<Option<T>> Get(StreamId id, long upToPosition = long.MaxValue)
+	public async Task<Option<T>> Get(StreamId id)
 	{
 		var state = Items.TryGetValue(id);
 		if (state.IsSome())
@@ -117,9 +117,8 @@ public abstract class ProjectionCache<T> : IDisposable
 
 		return await _lock.ExecuteGuarded(async () =>
 		{
-			var (item, position) = await InternalGet(id, upToPosition).ConfigureAwait(false);
-			if (item.IsSome() &&
-				position.Match(maxLoadedPosition => maxLoadedPosition <= _maxAppliedEventPosition, false))
+			var (item, position) = await InternalGet(id, long.MaxValue).ConfigureAwait(false);
+			if (item.IsSome() && position.Match(maxLoadedPosition => maxLoadedPosition <= _maxAppliedEventPosition, false))
 			{
 				InternalSet(Items.Set(id, item.GetValueOrDefault()!), _maxAppliedEventPosition);
 			}
@@ -144,12 +143,14 @@ public abstract class ProjectionCache<T> : IDisposable
 
 			Items = Items.Clear();
 
-			var items = events.Aggregate(Items, (s, e) =>
+			var items = events
+                .GetValueOrDefault(() => ImmutableList<Event>.Empty)
+                .Aggregate(Items, (s, e) =>
 			{
 				maxEventPosition = e.Position;
 				var item = s.TryGetValue(e.StreamId);
 				var updatedItem = InternalApply(item, e);
-				return updatedItem.Match(_ => s.Set(e.StreamId, _), () => s);
+				return updatedItem.Match(i => s.Set(e.StreamId, i), () => s);
 			});
 
 			InternalSet(items, maxEventPosition);

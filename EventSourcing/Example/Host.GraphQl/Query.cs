@@ -16,6 +16,7 @@ public class Query
 		var events = await readEvents();
 		var accountsWithInitialBalance = await
 			events
+                .GetValueOrThrow()
 				.Select(e => e.Payload)
 				.OfType<AccountCreated>()
 				.SelectAsync(accountCreated => accountCache
@@ -30,7 +31,7 @@ public record Account
 {
 	public Account(Example.Domain.Projections.Account inner, decimal initialBalance)
 	{
-		Inner = inner;
+		Inner = inner ?? throw new ArgumentNullException(nameof(inner));
 		InitialBalance = initialBalance;
 	}
 

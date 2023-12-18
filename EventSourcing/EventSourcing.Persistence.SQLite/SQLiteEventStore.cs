@@ -4,6 +4,8 @@ using System.Data.SQLite;
 using System.Linq;
 using System.Threading.Tasks;
 using EventSourcing.Events;
+using EventSourcing.Internals;
+using Microsoft.Extensions.Logging;
 
 namespace EventSourcing.Persistence.SQLite;
 
@@ -11,12 +13,14 @@ public class SQLiteEventStore : IEventReader, IEventWriter
 {
 	readonly SQLiteExecutor _executor;
 	readonly IEventSerializer<string> _eventSerializer;
+    readonly ILogger<SQLiteEventStore>? _logger;
 
-	public SQLiteEventStore(SQLiteExecutor executor, IEventSerializer<string> eventSerializer)
+    public SQLiteEventStore(SQLiteExecutor executor, IEventSerializer<string> eventSerializer, ILogger<SQLiteEventStore>? logger = null)
 	{
 		_executor = executor;
 		_eventSerializer = eventSerializer;
-	}
+        _logger = logger;
+    }
 
 	public Task<IEnumerable<Event>> ReadEvents(StreamId streamId, long upToPositionExclusive) => _executor.Execute(async con =>
 	{
@@ -32,12 +36,8 @@ public class SQLiteEventStore : IEventReader, IEventWriter
 		return EventFactory.EventFromPayload(payload, @event.Version, new(@event.Timestamp, TimeSpan.Zero), false);
 	}
 
-	public async Task<IReadOnlyList<Event>> ReadEvents(long fromPositionInclusive) => 
-		await _executor.Execute(async con =>
-		{
-			var readOnlyList = (await con.ReadEvents(fromPositionInclusive)).Select(Map).ToList();
-			return readOnlyList;
-		});
+	public Task<ReadResult<IReadOnlyList<Event>>> ReadEvents(long fromPositionInclusive) => 
+		_executor.Execute(con => EventReadHelper.ReadEvents<SQLiteEventsExtension.Event>(async () => await con.ReadEvents(fromPositionInclusive), Map, null, _logger));
 
 	public Task WriteEvents(IReadOnlyCollection<EventPayload> payloads) => _executor.Execute(con =>
 		con.WriteEvents(payloads

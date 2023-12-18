@@ -13,7 +13,7 @@ public record SqlStreamEventStoreOptions(
 {
 	public static SqlStreamEventStoreOptions Create(PollingOptions? pollingOptions = null, Func<Task<long>>? getLastProcessedEventPosition = null) =>
 		new(
-			pollingOptions ?? PollingOptions.UsePolling(EventStream.PollStrategyRetryOnFail(5),
+			pollingOptions ?? PollingOptions.UsePolling(EventStream.PollStrategyRetryOnFail(5, null),
 				TimeSpan.FromMilliseconds(100), TimeSpan.FromSeconds(2)),
 			 getLastProcessedEventPosition ?? (() => Task.FromResult(-1L))
 		);

@@ -1,4 +1,5 @@
-﻿using System.Reactive.Linq;
+﻿using System.Collections.Immutable;
+using System.Reactive.Linq;
 
 namespace EventSourcing.Events;
 
@@ -15,54 +16,60 @@ public class EventStreamFactory<T>
 		_getPosition = getPosition;
 	}
 
-	public IObservable<T> GetEventStream(long fromPositionInclusive) =>
-		Observable.Create<T>(async (observer, _) =>
-		{
-			var isLoading = true;
-			var syncObjc = new object();
+	public IObservable<T> GetEventStream(long? fromPositionInclusive)
+    {
+        if (fromPositionInclusive == null)
+            return _eventStream;
+        
+        return Observable.Create<T>(async (observer, _) =>
+        {
+            var isLoading = true;
+            var syncObjc = new object();
 
-			var eventsReceivedOnLoad = new List<T>();
-			var onLoadSubscription = _eventStream.Subscribe(e =>
-			{
-				// ReSharper disable once AccessToModifiedClosure
-				if (!isLoading)
-				{
-					observer.OnNext(e);
-					return;
-				}
+            var eventsReceivedOnLoad = new List<T>();
+            var onLoadSubscription = _eventStream.Subscribe(e =>
+            {
+                // ReSharper disable once AccessToModifiedClosure
+                if (!isLoading)
+                {
+                    observer.OnNext(e);
+                    return;
+                }
 
-				lock (syncObjc)
-				{
-					// ReSharper disable once AccessToModifiedClosure
-					if (!isLoading)
-						observer.OnNext(e);
-					else
-						eventsReceivedOnLoad.Add(e);
-				}
-			}, onCompleted: observer.OnCompleted);
+                lock (syncObjc)
+                {
+                    // ReSharper disable once AccessToModifiedClosure
+                    if (!isLoading)
+                        observer.OnNext(e);
+                    else
+                        eventsReceivedOnLoad.Add(e);
+                }
+            }, onCompleted: observer.OnCompleted);
 
-			var allEvents = await _readEvents(fromPositionInclusive);
+            var allEvents = await _readEvents(fromPositionInclusive.Value);
 
-			long maxEventPosition = -1;
-			foreach (var @event in allEvents)
-			{
-				observer.OnNext(@event);
-				maxEventPosition = _getPosition(@event);
-			}
-			lock (syncObjc)
-			{
-				isLoading = false;
-				foreach (var @event in eventsReceivedOnLoad.Where(e => _getPosition(e) > maxEventPosition))
-					observer.OnNext(@event);
-			}
+            long maxEventPosition = -1;
+            foreach (var @event in allEvents)
+            {
+                observer.OnNext(@event);
+                maxEventPosition = _getPosition(@event);
+            }
 
-			return onLoadSubscription;
-		});
+            lock (syncObjc)
+            {
+                isLoading = false;
+                foreach (var @event in eventsReceivedOnLoad.Where(e => _getPosition(e) > maxEventPosition))
+                    observer.OnNext(@event);
+            }
+
+            return onLoadSubscription;
+        });
+    }
 }
 
 public class EventStreamFactory : EventStreamFactory<Event>
 {
-	public EventStreamFactory(ReadEvents readEvents, IObservable<Event> eventStream) : base(async fromVersionInclusive => await readEvents(fromVersionInclusive), eventStream, e => e.Position)
+	public EventStreamFactory(ReadEvents readEvents, IObservable<Event> eventStream) : base(async fromVersionInclusive => (await readEvents(fromVersionInclusive)).GetValueOrDefault(() => ImmutableList<Event>.Empty), eventStream, e => e.Position)
 	{
 	}
 }

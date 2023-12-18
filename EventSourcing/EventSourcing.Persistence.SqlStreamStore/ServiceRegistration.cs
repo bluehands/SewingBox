@@ -56,8 +56,9 @@ public static class ServiceRegistration
 					var existingEvents = Observable.Create<Event>(async (observer, _) =>
 					{
 						var lastProcessedVersion = await options.GetLastProcessedEventPosition();
-						var allEvents = await eventReader.ReadEvents(lastProcessedVersion + 1);
-						foreach (var @event in allEvents) observer.OnNext(@event);
+						var allEvents = await eventReader
+                            .ReadEvents(lastProcessedVersion + 1);
+						foreach (var @event in allEvents.GetValueOrThrow()) observer.OnNext(@event);
 						observer.OnCompleted();
 					});
 

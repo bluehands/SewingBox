@@ -24,7 +24,7 @@ public record SQLiteEventStoreOptions(
 			connectionString,
 			minPollInterval ?? TimeSpan.FromMilliseconds(100),
 			maxPollInterval ?? TimeSpan.FromSeconds(30),
-			pollStrategy ?? new PeriodicObservable.RetryNTimesPollStrategy<Event, long>(e => e.Position, 10, position => position + 1)
+			pollStrategy ?? new PeriodicObservable.RetryNTimesWithExponentialBackOffPollStrategy<Event, long>(e => e.Position, 10, position => position + 1, null)
 		);
 }
 

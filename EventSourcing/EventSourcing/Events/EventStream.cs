@@ -39,19 +39,19 @@ public static class EventStream
 {
 	public static EventStream<T> CreateWithPolling<TSource, T>(Func<Task<long>> getLastProcessedEventNr,
 		Func<TSource, long> getEventNr,
-		Func<long, Task<IReadOnlyList<TSource>>> getOrderedNewEvents,
+        Func<long, Task<ReadResult<IReadOnlyList<TSource>>>> getOrderedNewEvents,
 		WakeUp wakeUp,
 		Func<IEnumerable<TSource>, Task<IEnumerable<T>>> getEvents,
 		ILogger logger, 
 		PeriodicObservable.PollStrategy<TSource, long> pollStrategy)
 	{
 		var eventNrStream = PeriodicObservable.Poll(
-			getLastProcessedEventNr,
-			getOrderedNewEvents,
-			pollStrategy.GetPollPosition, 
-			wakeUp,
-			Scheduler.Default,
-			logger);
+			initialState: getLastProcessedEventNr,
+			poll: getOrderedNewEvents,
+            deriveNextState: pollStrategy.GetPollPosition,
+			wakeUp: wakeUp,
+			scheduler: Scheduler.Default,
+			logger: logger);
 
 		var stream = eventNrStream
 			.SelectManyPreserveOrder(async sourceEvents =>
@@ -65,13 +65,13 @@ public static class EventStream
 				logger.LogInformation($"Publishing event range: {getEventNr(sourceEvents[0])} - {getEventNr(sourceEvents[sourceEvents.Count - 1])}");
 				return events;
 			}, logger, 1)
-			.SelectMany(_ => _);
+			.SelectMany(e => e);
 
 		return Create(stream);
 	}
 
 	public static EventStream<T> Create<T>(IObservable<T> events) => new(events);
 
-	public static PeriodicObservable.PollStrategy<Event, long> PollStrategyRetryOnFail(int retryCount) => new PeriodicObservable.RetryNTimesPollStrategy<Event, long>(e => e.Position, retryCount, l => l + 1);
+	public static PeriodicObservable.PollStrategy<Event, long> PollStrategyRetryOnFail(int retryCount, ILogger? logger) => new PeriodicObservable.RetryNTimesWithExponentialBackOffPollStrategy<Event, long>(e => e.Position, retryCount, l => l + 1, logger);
 	public static readonly PeriodicObservable.PollStrategy<Event, long> PollStrategyRetryForever = new PeriodicObservable.RetryForeverPollStrategy<Event, long>(e => e.Position);
 }

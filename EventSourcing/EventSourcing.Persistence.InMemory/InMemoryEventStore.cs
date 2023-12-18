@@ -16,18 +16,23 @@ public class InMemoryEventStore : IEventReader, IEventWriter
 
 	public long MaxEventNumber => _events[_events.Count - 1].Position;
 
-	public Task<IReadOnlyList<Event>> ReadEvents(long fromPositionInclusive) =>
+	public Task<ReadResult<IReadOnlyList<Event>>> ReadEvents(long fromPositionInclusive) =>
 		_lock.ExecuteGuarded(() =>
 			{
 				var versionExclusive = fromPositionInclusive - 1;
 				if (versionExclusive < 0)
 					versionExclusive = 0;
 
+                IReadOnlyList<Event> result;
 				if (_events.Count <= versionExclusive)
-					return (IReadOnlyList<Event>)ImmutableList<Event>.Empty;
-				var readOnlyList = _events.GetRange((int)versionExclusive, (int)(_events.Count - versionExclusive))
-					.ToImmutableList();
-				return readOnlyList;
+					result = ImmutableList<Event>.Empty;
+                else
+                {
+                    result = _events.GetRange((int)versionExclusive, (int)(_events.Count - versionExclusive))
+                        .ToImmutableList();
+                }
+                
+                return ReadResult.Ok(result);
 			}
 		);
 

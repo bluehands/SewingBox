@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using EventSourcing.Events;
+using EventSourcing.Internals;
 using FunicularSwitch.Extensions;
 using SqlStreamStore;
 using SqlStreamStore.Streams;
@@ -33,7 +34,7 @@ class SqlStreamStoreEventReader : IEventReader
 			.ConfigureAwait(false);
 	}
 
-	public async Task<IReadOnlyList<Event>> ReadEvents(long fromPositionInclusive)
+	public async Task<ReadResult<IReadOnlyList<Event>>> ReadEvents(long fromPositionInclusive)
 	{
 		var events = Enumerable.Empty<StreamMessage>();
 		var currentPosition = fromPositionInclusive;
