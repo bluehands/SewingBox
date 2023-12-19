@@ -27,9 +27,11 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Example.Host.Console", "Exa
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Example.Test", "Example\Test\Example.Test.csproj", "{D901A236-AEA3-4314-82FC-8250D277646C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventSourcing.Persistence.SQLite", "EventSourcing.Persistence.SQLite\EventSourcing.Persistence.SQLite.csproj", "{AE05BA10-E681-4609-A56D-EDC1E0356F92}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventSourcing.Persistence.SQLite", "EventSourcing.Persistence.SQLite\EventSourcing.Persistence.SQLite.csproj", "{AE05BA10-E681-4609-A56D-EDC1E0356F92}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventSourcing.Persistence", "EventSourcing.Persistence\EventSourcing.Persistence.csproj", "{773FEFC2-495B-44E4-9475-7D9A5F08D926}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventSourcing.Persistence", "EventSourcing.Persistence\EventSourcing.Persistence.csproj", "{773FEFC2-495B-44E4-9475-7D9A5F08D926}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventSourcing2", "EventSourcing2\EventSourcing2.csproj", "{8E759449-4988-4C31-B372-E02D02449075}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -89,6 +91,10 @@ Global
 		{773FEFC2-495B-44E4-9475-7D9A5F08D926}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{773FEFC2-495B-44E4-9475-7D9A5F08D926}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{773FEFC2-495B-44E4-9475-7D9A5F08D926}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8E759449-4988-4C31-B372-E02D02449075}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8E759449-4988-4C31-B372-E02D02449075}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8E759449-4988-4C31-B372-E02D02449075}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8E759449-4988-4C31-B372-E02D02449075}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
