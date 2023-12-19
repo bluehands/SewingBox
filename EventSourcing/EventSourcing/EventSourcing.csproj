@@ -15,13 +15,16 @@
 
 	<Target Name="AddCsFilesToOutput">
 		<ItemGroup>
-			<TfmSpecificPackageFile Include="*.cs" PackagePath="build/content" />
+			<TfmSpecificPackageFile Include="**/*.cs" PackagePath="build/content" />
 		</ItemGroup>
 	</Target>
 
 	<ItemGroup>
-		<PackageReference Include="FunicularSwitch" Version="5.0.0" />
-		<PackageReference Include="FunicularSwitch.Generators" Version="3.0.0" />
+		<PackageReference Include="FunicularSwitch" Version="5.0.1" />
+		<PackageReference Include="FunicularSwitch.Generators" Version="3.2.0">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
 		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="7.0.0" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="7.0.0" />
 		<PackageReference Include="Nito.AsyncEx" Version="5.1.2" />

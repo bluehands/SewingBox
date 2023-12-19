@@ -104,5 +104,16 @@ namespace EventSourcing.Commands
 		public static async Task Switch(this Task<EventSourcing.Commands.Failure> failure, Func<EventSourcing.Commands.Failure.Cancelled_, Task> cancelled, Func<EventSourcing.Commands.Failure.Conflict_, Task> conflict, Func<EventSourcing.Commands.Failure.Forbidden_, Task> forbidden, Func<EventSourcing.Commands.Failure.Internal_, Task> @internal, Func<EventSourcing.Commands.Failure.InvalidInput_, Task> invalidInput, Func<EventSourcing.Commands.Failure.Multiple_, Task> multiple, Func<EventSourcing.Commands.Failure.NotFound_, Task> notFound) =>
 		await (await failure.ConfigureAwait(false)).Switch(cancelled, conflict, forbidden, @internal, invalidInput, multiple, notFound).ConfigureAwait(false);
 	}
+	
+	public abstract partial class Failure
+	{
+		public static EventSourcing.Commands.Failure Cancelled(string message = null) => new EventSourcing.Commands.Failure.Cancelled_(message);
+		public static EventSourcing.Commands.Failure Conflict(string message) => new EventSourcing.Commands.Failure.Conflict_(message);
+		public static EventSourcing.Commands.Failure Forbidden(string message) => new EventSourcing.Commands.Failure.Forbidden_(message);
+		public static EventSourcing.Commands.Failure Internal(string message) => new EventSourcing.Commands.Failure.Internal_(message);
+		public static EventSourcing.Commands.Failure InvalidInput(string message) => new EventSourcing.Commands.Failure.InvalidInput_(message);
+		public static EventSourcing.Commands.Failure Multiple(global::System.Collections.Generic.IReadOnlyCollection<global::EventSourcing.Commands.Failure> failures) => new EventSourcing.Commands.Failure.Multiple_(failures);
+		public static EventSourcing.Commands.Failure NotFound(string message) => new EventSourcing.Commands.Failure.NotFound_(message);
+	}
 }
 #pragma warning restore 1591

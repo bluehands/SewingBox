@@ -68,7 +68,7 @@ public class NoOpCommandProcessor : CommandProcessor<NoOp>
 	public override Task<ProcessingResult.Processed_> InternalProcess(NoOp command) => Task.FromResult(command.ToEmptyProcessingResult("No operation"));
 }
 
-[FunicularSwitch.Generators.UnionType]
+[UnionType]
 public abstract class ProcessingResult
 {
 	public static ProcessingResult Processed(EventPayload resultEvent, CommandId commandId, FunctionalResult functionalResult) => new Processed_(resultEvent, commandId, functionalResult);
@@ -144,7 +144,7 @@ public abstract class ProcessingResult
 	}
 }
 
-[FunicularSwitch.Generators.UnionType]
+[UnionType]
 public abstract class FunctionalResult
 {
 	public static FunctionalResult Ok(string resultMessage) => new Ok_(resultMessage);
@@ -194,16 +194,8 @@ public abstract class FunctionalResult
 }
 
 [UnionType]
-public abstract class Failure
+public abstract partial class Failure
 {
-	public static Failure Forbidden(string message) => new Forbidden_(message);
-	public static Failure NotFound(string message) => new NotFound_(message);
-	public static Failure Conflict(string message) => new Conflict_(message);
-	public static Failure Internal(string message) => new Internal_(message);
-	public static Failure InvalidInput(string message) => new InvalidInput_(message);
-	public static Failure Multiple(IReadOnlyCollection<Failure> failures) => new Multiple_(failures);
-	public static Failure Cancelled(string? message = null) => new Cancelled_(message);
-
 	public string Message { get; }
 
 	public class Forbidden_ : Failure
