@@ -10,11 +10,11 @@ public class WakeUp
 {
 	readonly AsyncManualResetEvent _resetEvent  = new(true);
 	readonly TimeSpan _maxWaitTime;
-	readonly ILogger _logger;
+	readonly ILogger? _logger;
 	readonly TimeSpan _minWaitTime;
 	TimeSpan _currentWaitTime;
 
-	public WakeUp(TimeSpan minWaitTime, TimeSpan maxWaitTime, ILogger logger)
+	public WakeUp(TimeSpan minWaitTime, TimeSpan maxWaitTime, ILogger? logger)
 	{
 		_minWaitTime = minWaitTime;
 		_maxWaitTime = maxWaitTime;
@@ -38,7 +38,7 @@ public class WakeUp
             var nextWaitTime = _currentWaitTime.Add(_currentWaitTime == TimeSpan.Zero ? TimeSpan.FromTicks(_maxWaitTime.Ticks / 10) : _currentWaitTime);
             _currentWaitTime = nextWaitTime < _maxWaitTime ? nextWaitTime : _maxWaitTime;
         }
-        if (_logger.IsEnabled(LogLevel.Debug))
+        if (_logger?.IsEnabled(LogLevel.Debug) ?? false)
             _logger.LogDebug($"Wait time set to {_currentWaitTime}");
     }
 
@@ -47,7 +47,7 @@ public class WakeUp
 	public void ThereIsWorkToDo()
 	{
 		_resetEvent.Set();
-		if (_logger.IsEnabled(LogLevel.Debug))
+		if (_logger?.IsEnabled(LogLevel.Debug) ?? false)
 			_logger.LogDebug("Signaled");
 	}
 }
