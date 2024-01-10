@@ -24,7 +24,10 @@ public static class StartUpExtensions
 
 public static class ServiceCollectionExtension
 {
-	public static IServiceCollection AddEventSourcing<TOptions, TDbEvent, TSerializedPayload>(this IServiceCollection services, IEventStoreServiceRegistration<TOptions> eventStoreServices, TOptions options)
+	public static IServiceCollection AddEventSourcing<TOptions, TDbEvent, TSerializedPayload>(
+        this IServiceCollection services, 
+        IEventStoreServiceRegistration<TOptions> eventStoreServices,
+        TOptions options) where TOptions : EventStoreOptions
 	{
 		services.AddSingleton(provider => eventStoreServices.BuildEventStream(provider, options));
 		eventStoreServices.AddEventReader(services, options);
@@ -32,9 +35,14 @@ public static class ServiceCollectionExtension
 		eventStoreServices.AddEventSerializer(services, options);
 		eventStoreServices.AddDbEventDescriptor(services);
 
-		return services
+        var executingAssembly = Assembly.GetEntryAssembly();
+        return services
             .AddSingleton<IObservable<Event>>(provider => provider.GetRequiredService<EventStream<Event>>())
-            .AddTransient<IEventStore, EventStore<TDbEvent, TSerializedPayload>>();
+            .AddTransient<IEventStore, EventStore<TDbEvent, TSerializedPayload>>()
+            .RegisterEventPayloads(options.PayloadAssemblies ?? executingAssembly.Yield())
+            .RegisterPayloadMappers(options.PayloadMapperAssemblies ?? executingAssembly.Yield());
+        
+
         //.AddSingleton<WriteEvents>(serviceProvider => payloads => serviceProvider.GetRequiredService<IEventWriter>().WriteEvents(payloads))
         //.AddSingleton<ReadEvents>(serviceProvider => async fromPositionInclusive => await serviceProvider.GetRequiredService<IEventReader>().ReadEvents(fromPositionInclusive))
         //.AddSingleton<ReadEventsByStreamId>(serviceProvider => (streamId, upToVersionExclusive) => serviceProvider.GetRequiredService<IEventReader>().ReadEvents(streamId, upToVersionExclusive));
@@ -64,7 +72,7 @@ public static class ServiceCollectionExtension
 
 	public static IServiceCollection RegisterEventPayloads(this IServiceCollection serviceCollection, IEnumerable<Assembly> payloadAssemblies)
 	{
-		EventFactory.Initialize(payloadAssemblies.Concat(new []{typeof(CommandProcessed).Assembly}));
+		EventFactory.Initialize(payloadAssemblies);
 		return serviceCollection;
 	}
 
@@ -135,6 +143,12 @@ public static class ServiceCollectionExtension
                 eventStore, logger, wakeUp);
 		return new(subscription);
 	}
+}
+
+public class EventStoreOptions
+{
+	public IReadOnlyCollection<Assembly>? PayloadAssemblies { get; set; }
+    public IReadOnlyCollection<Assembly>? PayloadMapperAssemblies { get; set; }
 }
 
 public sealed class CommandProcessorSubscription(IDisposable subscription) : IDisposable

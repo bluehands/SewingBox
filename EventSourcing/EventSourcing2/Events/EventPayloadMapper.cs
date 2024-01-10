@@ -39,6 +39,11 @@ public abstract class EventPayloadMapper
 		_mappers = _mappers.SetItems(InternalRegister(assembly));
 	}
 
+    internal static void AddIdentityMapper(string eventType, Type payloadType)
+    {
+        _mappers = _mappers.SetItem(eventType, (EventPayloadMapper)Activator.CreateInstance(typeof(IdentityMapper<>).MakeGenericType(payloadType)));
+    }
+
 	static ImmutableDictionary<string, EventPayloadMapper> InternalRegister(IEnumerable<Assembly> assemblies)
 	{
 		return typeof(EventPayloadMapper)
@@ -47,17 +52,17 @@ public abstract class EventPayloadMapper
 			.Select(t => new
 			{
 				t,
-				att = t.GetArgumentOfFirstGenericBaseType().GetCustomAttribute<SerializedEventPayloadAttribute>()
+				att = t.GetArgumentOfFirstGenericBaseType().GetCustomAttribute<SerializableEventPayloadAttribute>()
 			})
-			.Where(_ =>
+			.Where(t =>
 			{
-				if (_.att == null)
+				if (t.att == null)
 					throw new ArgumentException(
-						$"Type {_.t.GetArgumentOfFirstGenericBaseType().BeautifulName()} is used as payload type in PayloadMapper {_.t.BeautifulName()}. It has to be marked with {nameof(SerializedEventPayloadAttribute)}.");
+						$"Type {t.t.GetArgumentOfFirstGenericBaseType().BeautifulName()} is used as payload type in PayloadMapper {t.t.BeautifulName()}. It has to be marked with {nameof(SerializableEventPayloadAttribute)}.");
 
-				return _.att != null;
+				return t.att != null;
 			})
-			.ToImmutableDictionary(_ => _.att!.EventType, _ => (EventPayloadMapper)Activator.CreateInstance(_.t)!);
+			.ToImmutableDictionary(t => t.att!.EventType, t => (EventPayloadMapper)Activator.CreateInstance(t.t)!);
 	}
 
 	public static EventPayload MapFromSerializedPayload(string eventType, object serializedPayload, 
@@ -99,4 +104,11 @@ public abstract class EventPayloadMapper
 				.GetBaseType(t => t.IsGenericType && t.GetGenericTypeDefinition() == typeof(EventPayloadMapper<,>))
 				.GetGenericArguments()[0]);
 	}
+}
+
+sealed class IdentityMapper<T> : EventPayloadMapper<T, T> where T : EventPayload
+{
+    protected override T MapFromSerializablePayload(T serialized) => serialized;
+
+    protected override T MapToSerializablePayload(T payload) => payload;
 }

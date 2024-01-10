@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace EventSourcing.Persistence.EntityFramework;
 
-public class EventStoreOptions
+public class EventStoreOptions : EventSourcing2.EventStoreOptions
 {
     public TimeSpan MinPollWaitTime { get; init; } = TimeSpan.Zero;
     public TimeSpan MaxPollWaitTime { get; init; } = TimeSpan.FromSeconds(1);
@@ -14,13 +14,24 @@ public class EventStoreOptions
 
 public static class ServiceRegistration
 {
-    public static IServiceCollection AddEntityFrameworkEventStore(this IServiceCollection services, EventStoreOptions options, Action<DbContextOptionsBuilder> configureDbContext)
+    public static IServiceCollection AddEntityFrameworkEventStore(this IServiceCollection services,
+        EventStoreOptions options, Action<DbContextOptionsBuilder> configureDbContext)
     {
         services.AddDbContext<EventStoreContext>(configureDbContext);
 
         services.AddSingleton(sp => new WakeUp(options.MinPollWaitTime, options.MaxPollWaitTime, sp.GetService<ILogger<WakeUp>>()));
 
         return services.AddEventSourcing<EventStoreOptions, Event, string>(new StoreRegistration(), options);
+    }
+
+    public static async Task StartEventSourcing(this IServiceProvider serviceProvider, bool databaseMigration = true)
+    {
+        if (databaseMigration)
+        {
+            using var scope = serviceProvider.CreateScope();
+            await scope.ServiceProvider.GetRequiredService<EventStoreContext>().Database.MigrateAsync();
+        }
+        serviceProvider.GetRequiredService<EventStream<EventSourcing2.Event>>().Start();
     }
 
     class StoreRegistration : IEventStoreServiceRegistration<EventStoreOptions>

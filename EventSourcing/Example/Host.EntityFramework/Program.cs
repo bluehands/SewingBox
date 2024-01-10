@@ -1,7 +1,7 @@
 ﻿using EventSourcing.Persistence.EntityFramework;
 using EventSourcing.Persistence.EntityFramework.Sqlite;
 using EventSourcing2;
-using Microsoft.EntityFrameworkCore;
+using EventSourcing2.Events;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -16,26 +16,50 @@ internal class Program
         using var host = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder()
             .ConfigureServices(serviceCollection =>
             {
-                serviceCollection.AddEntityFrameworkEventStore(new EventStoreOptions(), options =>
-                {
-                    options.UseSqlite(@"Data Source=c:\temp\EventStore.db", x => x.MigrationsAssembly(Provider.Sqlite.Assembly));
-                });
+                serviceCollection.AddSqliteEventStore(@"Data Source=c:\temp\EventStore.db");
             })
-            .ConfigureLogging(builder => builder.AddConsole())
+            .ConfigureLogging(builder =>
+            {
+                builder.AddConsole();
+            })
             .Build();
 
-        using (var scope = host.Services.CreateScope())
-        {
-            await scope.ServiceProvider.GetRequiredService<EventStoreContext>().Database.MigrateAsync();
-        }
+        await host.Services.StartEventSourcing();
 
-        host.Services.GetRequiredService<EventStream<Event>>().Start();
         await host.StartAsync();
+
+        await TryIt(host.Services);
+
         await host.WaitForShutdownAsync();
     }
 
-    public record Provider(string Name, string Assembly) 
+    static async Task TryIt(IServiceProvider services)
     {
-        public static Provider Sqlite = new (nameof(Sqlite), typeof(Marker).Assembly.GetName().Name!);
+        var eventStream = services.GetRequiredService<IObservable<Event>>();
+        eventStream.Subscribe(@event => Console.WriteLine($"Received: {@event}"));
+
+        var eventStore = services.GetRequiredService<IEventStore>();
+        await eventStore.WriteEvents(new[] { new MyFirstEvent("My first event :)") });
+
+        Console.WriteLine("Reading all events from store...");
+        await foreach(var @event in eventStore.ReadEvents(0))
+        {
+            Console.WriteLine(@event);
+        }
     }
 }
+
+
+[SerializableEventPayload("MyFirstEvent")]
+public record MyFirstEvent(string Name) : EventPayload(new("TestStreamType", "TestStreamId"), "MyFirstEvent");
+
+
+//public record MyFirstSerializableEvent(string Name) {
+//}
+
+//public class MyFirstEventPayloadMapper : EventPayloadMapper<MyFirstSerializableEvent, MyFirstEvent>
+//{
+//    protected override MyFirstEvent MapFromSerializablePayload(MyFirstSerializableEvent serialized) => new MyFirstEvent(serialized.Name);
+
+//    protected override MyFirstSerializableEvent MapToSerializablePayload(MyFirstEvent payload) => new MyFirstSerializableEvent(payload.Name);
+//}

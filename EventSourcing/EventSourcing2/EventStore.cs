@@ -22,11 +22,11 @@ public class EventStore<TDbEvent, TSerializedPayload> : IEventStore
     readonly IDbEventDescriptor<TDbEvent, TSerializedPayload> _eventDescriptor;
 
     public EventStore(
-        IEventReader<TDbEvent> eventReader, 
-        IDbEventDescriptor<TDbEvent, TSerializedPayload> eventDescriptor, 
-        IEventSerializer<TSerializedPayload> payloadSerializer,
-        IEventWriter<TDbEvent> eventWriter)
-
+        IEventReader<TDbEvent> eventReader,
+        IEventWriter<TDbEvent> eventWriter,
+        IDbEventDescriptor<TDbEvent, TSerializedPayload> eventDescriptor,
+        IEventSerializer<TSerializedPayload> payloadSerializer
+        )
     {
         _eventReader = eventReader;
         _payloadSerializer = payloadSerializer;
