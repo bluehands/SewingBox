@@ -5,7 +5,7 @@ namespace EventSourcing2.Internals;
 
 public interface IEventStoreServiceRegistration<in TOptions>
 {
-    public EventStream<Event> BuildEventStream(IServiceProvider provider, TOptions options);
+    public void AddEventStream(IServiceCollection services, TOptions options);
     /// <summary>
     /// Register IEventReader implementation.
     /// </summary>

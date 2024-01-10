@@ -14,14 +14,10 @@ public class EventStoreOptions : EventSourcing2.EventStoreOptions
 
 public static class ServiceRegistration
 {
-    public static IServiceCollection AddEntityFrameworkEventStore(this IServiceCollection services,
-        EventStoreOptions options, Action<DbContextOptionsBuilder> configureDbContext)
+    public static IServiceCollection AddEntityFrameworkEventStore(this IServiceCollection services, EventStoreOptions options, Action<DbContextOptionsBuilder> configureDbContext, IEventStoreServiceRegistration<EventStoreOptions>? storeServiceRegistration = null)
     {
         services.AddDbContext<EventStoreContext>(configureDbContext);
-
-        services.AddSingleton(sp => new WakeUp(options.MinPollWaitTime, options.MaxPollWaitTime, sp.GetService<ILogger<WakeUp>>()));
-
-        return services.AddEventSourcing<EventStoreOptions, Event, string>(new StoreRegistration(), options);
+        return services.AddEventSourcing<EventStoreOptions, Event, string>(storeServiceRegistration ?? new DefaultStoreRegistration(), options);
     }
 
     public static async Task StartEventSourcing(this IServiceProvider serviceProvider, bool databaseMigration = true)
@@ -34,9 +30,15 @@ public static class ServiceRegistration
         serviceProvider.GetRequiredService<EventStream<EventSourcing2.Event>>().Start();
     }
 
-    class StoreRegistration : IEventStoreServiceRegistration<EventStoreOptions>
+    public class DefaultStoreRegistration : IEventStoreServiceRegistration<EventStoreOptions>
     {
-        public EventStream<EventSourcing2.Event> BuildEventStream(IServiceProvider provider, EventStoreOptions options)
+        public virtual void AddEventStream(IServiceCollection services, EventStoreOptions options)
+        {
+            services.AddSingleton(sp => new WakeUp(options.MinPollWaitTime, options.MaxPollWaitTime, sp.GetService<ILogger<WakeUp>>()));
+            services.AddSingleton(sp => BuildPollingEventStream(sp, options));
+        }
+
+        static EventStream<EventSourcing2.Event> BuildPollingEventStream(IServiceProvider provider, EventStoreOptions options)
         {
             var streamScope = provider.CreateScope();
 
@@ -53,22 +55,22 @@ public static class ServiceRegistration
             return new(events, streamScope);
         }
 
-        public void AddEventReader(IServiceCollection services, EventStoreOptions options)
+        public virtual void AddEventReader(IServiceCollection services, EventStoreOptions options)
         {
             services.AddTransient<IEventReader<Event>, EventStore>();
         }
 
-        public void AddEventWriter(IServiceCollection services, EventStoreOptions options)
+        public virtual void AddEventWriter(IServiceCollection services, EventStoreOptions options)
         {
             services.AddTransient<IEventWriter<Event>, EventStore>();
         }
 
-        public void AddEventSerializer(IServiceCollection services, EventStoreOptions options)
+        public virtual void AddEventSerializer(IServiceCollection services, EventStoreOptions options)
         {
             services.AddTransient<IEventSerializer<string>, JsonEventSerializer>();
         }
 
-        public void AddDbEventDescriptor(IServiceCollection services)
+        public virtual void AddDbEventDescriptor(IServiceCollection services)
         {
             services.AddTransient<IDbEventDescriptor<Event, string>, EventDescriptor>();
         }

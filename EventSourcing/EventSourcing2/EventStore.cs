@@ -12,7 +12,13 @@ public interface IEventStore
     Task WriteEvents(IReadOnlyCollection<EventPayload> payloads);
 }
 
-public class EventStore<TDbEvent, TSerializedPayload> : IEventStore
+public interface IEventMapper<TDbEvent>
+{
+    IEnumerable<TDbEvent> MapToDbEvents(IEnumerable<EventPayload> payloads);
+    IAsyncEnumerable<Event> MapFromDbEvents(IAsyncEnumerable<TDbEvent> dbEvents);
+}
+
+public class EventStore<TDbEvent, TSerializedPayload> : IEventStore, IEventMapper<TDbEvent>
 {
     //TODO: register payload mappers at di and receive them in ctor, then move deserialize call to read method.
 
@@ -46,14 +52,14 @@ public class EventStore<TDbEvent, TSerializedPayload> : IEventStore
         return _eventWriter.WriteEvents(events);
     }
 
-    IEnumerable<TDbEvent> MapToDbEvents(IEnumerable<EventPayload> payloads) =>
+    public IEnumerable<TDbEvent> MapToDbEvents(IEnumerable<EventPayload> payloads) =>
         payloads.Select(payload =>
         {
             var serializedPayload = _payloadSerializer.Serialize(payload);
             return _eventDescriptor.CreateDbEvent(payload.StreamId, payload.EventType, serializedPayload);
         });
 
-    async IAsyncEnumerable<Event> MapFromDbEvents(IAsyncEnumerable<TDbEvent> dbEvents)
+    public async IAsyncEnumerable<Event> MapFromDbEvents(IAsyncEnumerable<TDbEvent> dbEvents)
     {
         await foreach (var dbEvent in dbEvents)
         {

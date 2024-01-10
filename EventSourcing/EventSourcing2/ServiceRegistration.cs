@@ -29,23 +29,19 @@ public static class ServiceCollectionExtension
         IEventStoreServiceRegistration<TOptions> eventStoreServices,
         TOptions options) where TOptions : EventStoreOptions
 	{
-		services.AddSingleton(provider => eventStoreServices.BuildEventStream(provider, options));
+		eventStoreServices.AddEventStream(services, options);
 		eventStoreServices.AddEventReader(services, options);
 		eventStoreServices.AddEventWriter(services, options);
 		eventStoreServices.AddEventSerializer(services, options);
 		eventStoreServices.AddDbEventDescriptor(services);
 
-        var executingAssembly = Assembly.GetEntryAssembly();
+		var entryAssembly = Assembly.GetEntryAssembly();
         return services
             .AddSingleton<IObservable<Event>>(provider => provider.GetRequiredService<EventStream<Event>>())
             .AddTransient<IEventStore, EventStore<TDbEvent, TSerializedPayload>>()
-            .RegisterEventPayloads(options.PayloadAssemblies ?? executingAssembly.Yield())
-            .RegisterPayloadMappers(options.PayloadMapperAssemblies ?? executingAssembly.Yield());
-        
-
-        //.AddSingleton<WriteEvents>(serviceProvider => payloads => serviceProvider.GetRequiredService<IEventWriter>().WriteEvents(payloads))
-        //.AddSingleton<ReadEvents>(serviceProvider => async fromPositionInclusive => await serviceProvider.GetRequiredService<IEventReader>().ReadEvents(fromPositionInclusive))
-        //.AddSingleton<ReadEventsByStreamId>(serviceProvider => (streamId, upToVersionExclusive) => serviceProvider.GetRequiredService<IEventReader>().ReadEvents(streamId, upToVersionExclusive));
+            .AddTransient<IEventMapper<TDbEvent>, EventStore<TDbEvent, TSerializedPayload>>()
+            .RegisterEventPayloads(options.PayloadAssemblies ?? entryAssembly.Yield())
+            .RegisterPayloadMappers(options.PayloadMapperAssemblies ?? entryAssembly.Yield());
     }
 
 	public static IServiceCollection AddEventSourcing(this IServiceCollection serviceCollection,

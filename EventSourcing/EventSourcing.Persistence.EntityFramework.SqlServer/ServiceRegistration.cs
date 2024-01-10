@@ -10,6 +10,6 @@ namespace EventSourcing.Persistence.EntityFramework.SqlServer
                 options =>
                 {
                     options.UseSqlServer(connectionString, x => x.MigrationsAssembly(typeof(Marker).Assembly.GetName().Name!));
-                });
+                }, new StoreRegistration());
     }
 }

@@ -39,15 +39,28 @@ internal class Program
     static async Task TryIt(IServiceProvider services)
     {
         var eventStream = services.GetRequiredService<IObservable<Event>>();
-        eventStream.Subscribe(@event => Console.WriteLine($"Received: {@event}"));
+        using var subscription = eventStream.Subscribe(@event => Console.WriteLine($"Received: {@event}"));
 
         var eventStore = services.GetRequiredService<IEventStore>();
-        await eventStore.WriteEvents(new[] { new MyFirstEvent("My first event :)") });
 
         Console.WriteLine("Reading all events from store...");
         await foreach(var @event in eventStore.ReadEvents(0))
         {
             Console.WriteLine(@event);
+        }
+
+        int i = 0;
+        var cancellationToken = services.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping;
+        try
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                await Task.Delay(TimeSpan.FromSeconds(5), cancellationToken);
+                await eventStore.WriteEvents(new[] { new MyFirstEvent($"My event {i++}") });
+            }
+        }
+        catch (OperationCanceledException)
+        {
         }
     }
 }
