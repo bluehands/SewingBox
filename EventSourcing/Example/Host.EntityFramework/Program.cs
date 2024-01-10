@@ -1,4 +1,5 @@
 ﻿using EventSourcing.Persistence.EntityFramework;
+using EventSourcing.Persistence.EntityFramework.SqlServer;
 using EventSourcing.Persistence.EntityFramework.Sqlite;
 using EventSourcing2;
 using EventSourcing2.Events;
@@ -16,7 +17,9 @@ internal class Program
         using var host = Microsoft.Extensions.Hosting.Host.CreateDefaultBuilder()
             .ConfigureServices(serviceCollection =>
             {
-                serviceCollection.AddSqliteEventStore(@"Data Source=c:\temp\EventStore.db");
+                serviceCollection.AddSqlServerEventStore("Data Source=.\\SQLSERVEREXPRESS;Initial Catalog=TestEventStore2;Integrated Security=True;TrustServerCertificate=True;");
+
+                //serviceCollection.AddSqliteEventStore(@"Data Source=c:\temp\EventStore.db");
             })
             .ConfigureLogging(builder =>
             {

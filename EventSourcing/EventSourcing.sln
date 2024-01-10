@@ -31,13 +31,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventSourcing.Persistence.S
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventSourcing.Persistence", "EventSourcing.Persistence\EventSourcing.Persistence.csproj", "{773FEFC2-495B-44E4-9475-7D9A5F08D926}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventSourcing2", "EventSourcing2\EventSourcing2.csproj", "{8E759449-4988-4C31-B372-E02D02449075}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventSourcing2", "EventSourcing2\EventSourcing2.csproj", "{8E759449-4988-4C31-B372-E02D02449075}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventSourcing.Persistence.EntityFramework", "EventSourcing.Persistence.EntityFramework\EventSourcing.Persistence.EntityFramework.csproj", "{45265079-D146-42AD-8BF2-8B615ADC186E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventSourcing.Persistence.EntityFramework", "EventSourcing.Persistence.EntityFramework\EventSourcing.Persistence.EntityFramework.csproj", "{45265079-D146-42AD-8BF2-8B615ADC186E}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "EventSourcing.Persistence.EntityFramework.Sqlite", "EventSourcing.Persistence.EntityFramework.Sqlite\EventSourcing.Persistence.EntityFramework.Sqlite.csproj", "{AABB65CE-FA7B-4839-8CDA-7EDEB0D7E298}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventSourcing.Persistence.EntityFramework.Sqlite", "EventSourcing.Persistence.EntityFramework.Sqlite\EventSourcing.Persistence.EntityFramework.Sqlite.csproj", "{AABB65CE-FA7B-4839-8CDA-7EDEB0D7E298}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Example.Host.EntityFramework", "Example\Host.EntityFramework\Example.Host.EntityFramework.csproj", "{989336AE-B900-4F44-89EC-848F7984E4C3}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Example.Host.EntityFramework", "Example\Host.EntityFramework\Example.Host.EntityFramework.csproj", "{989336AE-B900-4F44-89EC-848F7984E4C3}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "EventSourcing.Persistence.EntityFramework.SqlServer", "EventSourcing.Persistence.EntityFramework.SqlServer\EventSourcing.Persistence.EntityFramework.SqlServer.csproj", "{18FB8B95-9E58-4D98-BBF3-7EFD47EC2FE7}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -113,6 +115,10 @@ Global
 		{989336AE-B900-4F44-89EC-848F7984E4C3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{989336AE-B900-4F44-89EC-848F7984E4C3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{989336AE-B900-4F44-89EC-848F7984E4C3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{18FB8B95-9E58-4D98-BBF3-7EFD47EC2FE7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{18FB8B95-9E58-4D98-BBF3-7EFD47EC2FE7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{18FB8B95-9E58-4D98-BBF3-7EFD47EC2FE7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{18FB8B95-9E58-4D98-BBF3-7EFD47EC2FE7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
