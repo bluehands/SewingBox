@@ -11,9 +11,9 @@ namespace EventSourcing.Persistence.EntityFramework.SqlServer;
 
 static class Commands
 {
-    public const string SelectCommand =
+    public static string SelectCommand(int maxRows) =>
         $"""
-         SELECT
+         SELECT TOP {maxRows}
          	[{nameof(Event.Position)}],
          	[{nameof(Event.EventType)}],
          	[{nameof(Event.StreamId)}],
@@ -26,7 +26,7 @@ static class Commands
          """;
 }
 
-public class StoreRegistration : EntityFramework.ServiceRegistration.DefaultStoreRegistration
+public class StoreRegistration
 {
     class SqlServerExecutor : IDbExecutor
     {
@@ -42,7 +42,7 @@ public class StoreRegistration : EntityFramework.ServiceRegistration.DefaultStor
         }
     }
 
-    public override void AddEventStream(IServiceCollection services, EventStoreOptions options)
+    public void AddEventStream(IServiceCollection services, int maxRowsPerSelect)
     {
         services.AddSingleton(sp =>
         {
@@ -52,7 +52,7 @@ public class StoreRegistration : EntityFramework.ServiceRegistration.DefaultStor
             var innerStream = ChangeListener.GetChangeStream(new SqlServerExecutor(sp), (lastPosition, connection) =>
                 {
                     var cmd = connection.CreateCommand();
-                    cmd.CommandText = Commands.SelectCommand;
+                    cmd.CommandText = Commands.SelectCommand(maxRowsPerSelect);
                     cmd.Parameters.Add(new($"@{nameof(Event.Position)}", SqlDbType.BigInt)
                     {
                         Value = lastPosition

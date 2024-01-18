@@ -6,18 +6,17 @@ using Microsoft.Extensions.Logging;
 
 namespace EventSourcing.Persistence.EntityFramework;
 
-public class EventStoreOptions : EventSourcing2.EventStoreOptions
-{
-    public TimeSpan MinPollWaitTime { get; init; } = TimeSpan.Zero;
-    public TimeSpan MaxPollWaitTime { get; init; } = TimeSpan.FromSeconds(1);
-}
-
 public static class ServiceRegistration
 {
-    public static IServiceCollection AddEntityFrameworkEventStore(this IServiceCollection services, EventStoreOptions options, Action<DbContextOptionsBuilder> configureDbContext, IEventStoreServiceRegistration<EventStoreOptions>? storeServiceRegistration = null)
+    public static IServiceCollection AddEntityFrameworkEventStore<TOptions>(this IServiceCollection services,
+        TOptions options,
+        Action<DbContextOptionsBuilder> configureDbContext,
+        IEventStoreServiceRegistration<TOptions> storeServiceRegistration
+        )
+    where TOptions : EventStoreOptions
     {
         services.AddDbContext<EventStoreContext>(configureDbContext);
-        return services.AddEventSourcing<EventStoreOptions, Event, string>(storeServiceRegistration ?? new DefaultStoreRegistration(), options);
+        return services.AddEventSourcing<TOptions, Event, string>(storeServiceRegistration, options);
     }
 
     public static async Task StartEventSourcing(this IServiceProvider serviceProvider, bool databaseMigration = true)
@@ -29,51 +28,67 @@ public static class ServiceRegistration
         }
         serviceProvider.GetRequiredService<EventStream<EventSourcing2.Event>>().Start();
     }
+}
 
-    public class DefaultStoreRegistration : IEventStoreServiceRegistration<EventStoreOptions>
+public abstract class DefaultStoreRegistration<TOptions> : IEventStoreServiceRegistration<TOptions> where TOptions : EventStoreOptions
+{
+    protected void AddPollingEventStream(IServiceCollection services, TimeSpan minWaitTime, TimeSpan maxWaitTime, long positionToStart)
     {
-        public virtual void AddEventStream(IServiceCollection services, EventStoreOptions options)
-        {
-            services.AddSingleton(sp => new WakeUp(options.MinPollWaitTime, options.MaxPollWaitTime, sp.GetService<ILogger<WakeUp>>()));
-            services.AddSingleton(sp => BuildPollingEventStream(sp, options));
-        }
+        services.AddSingleton(sp => new WakeUp(minWaitTime, maxWaitTime, sp.GetService<ILogger<WakeUp>>()));
+        services.AddSingleton(sp => BuildPollingEventStream(sp, positionToStart));
+    }
 
-        static EventStream<EventSourcing2.Event> BuildPollingEventStream(IServiceProvider provider, EventStoreOptions options)
-        {
-            var streamScope = provider.CreateScope();
+    static EventStream<EventSourcing2.Event> BuildPollingEventStream(IServiceProvider provider, long positionToStart)
+    {
+        var streamScope = provider.CreateScope();
 
-            var eventReader = streamScope.ServiceProvider.GetRequiredService<IEventStore>();
-            var wakeUp = provider.GetRequiredService<WakeUp>();
+        var eventReader = streamScope.ServiceProvider.GetRequiredService<IEventStore>();
+        var wakeUp = provider.GetRequiredService<WakeUp>();
 
-            var events = PeriodicObservable.Poll(
-                () => Task.FromResult(0L),
-                eventReader.ReadEvents,
-                wakeUp,
-                provider.GetService<ILogger<EventStream<EventSourcing2.Event>>>()
-            );
+        var events = PeriodicObservable.Poll(
+            () => Task.FromResult(positionToStart),
+            eventReader.ReadEvents,
+            wakeUp,
+            provider.GetService<ILogger<EventStream<EventSourcing2.Event>>>()
+        );
 
-            return new(events, streamScope);
-        }
+        return new(events, streamScope);
+    }
 
-        public virtual void AddEventReader(IServiceCollection services, EventStoreOptions options)
-        {
-            services.AddTransient<IEventReader<Event>, EventStore>();
-        }
+    public abstract void AddEventStream(IServiceCollection services, TOptions options);
 
-        public virtual void AddEventWriter(IServiceCollection services, EventStoreOptions options)
-        {
-            services.AddTransient<IEventWriter<Event>, EventStore>();
-        }
+    public virtual void AddEventReader(IServiceCollection services, TOptions options)
+    {
+        services.AddTransient<IEventReader<Event>, EventStore>();
+    }
 
-        public virtual void AddEventSerializer(IServiceCollection services, EventStoreOptions options)
-        {
-            services.AddTransient<IEventSerializer<string>, JsonEventSerializer>();
-        }
+    public virtual void AddEventWriter(IServiceCollection services, TOptions options)
+    {
+        services.AddTransient<IEventWriter<Event>, EventStore>();
+    }
 
-        public virtual void AddDbEventDescriptor(IServiceCollection services)
-        {
-            services.AddTransient<IDbEventDescriptor<Event, string>, EventDescriptor>();
-        }
+    public virtual void AddEventSerializer(IServiceCollection services, TOptions options)
+    {
+        services.AddTransient<IEventSerializer<string>, JsonEventSerializer>();
+    }
+
+    public virtual void AddDbEventDescriptor(IServiceCollection services)
+    {
+        services.AddTransient<IDbEventDescriptor<Event, string>, EventDescriptor>();
+    }
+}
+
+public static class EntityFrameworkServices
+{
+    public static IServiceCollection AddEntityFrameworkServices(this IServiceCollection services)
+    {
+        services.AddTransient<IEventReader<Event>, EventStore>();
+        services.AddTransient<IEventWriter<Event>, EventStore>();
+        services.AddTransient<IEventSerializer<string>, JsonEventSerializer>();
+        services.AddTransient<IDbEventDescriptor<Event, string>, EventDescriptor>();
+        services.AddTransient<IEventStore, EventStore<Event, string>>();
+        services.AddTransient<IEventMapper<Event>, EventStore<Event, string>>();
+        return services;
     }
 }
 

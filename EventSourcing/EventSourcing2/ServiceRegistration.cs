@@ -24,16 +24,30 @@ public static class StartUpExtensions
 
 public static class ServiceCollectionExtension
 {
+    public static IServiceCollection AddEventSourcing(this IServiceCollection serviceCollection, Action<EventSourcingOptionsBuilder> configure)
+    {
+        var builder = EventSourcingOptionsBuilder.WithCoreOptions();
+        configure(builder);
+
+		foreach (var eventSourcingOptionsExtension in builder.Options.Extensions)
+        {
+            eventSourcingOptionsExtension.ApplyServices(serviceCollection);
+        }
+
+        return serviceCollection;
+    }
+
+
 	public static IServiceCollection AddEventSourcing<TOptions, TDbEvent, TSerializedPayload>(
         this IServiceCollection services, 
         IEventStoreServiceRegistration<TOptions> eventStoreServices,
         TOptions options) where TOptions : EventStoreOptions
 	{
-		eventStoreServices.AddEventStream(services, options);
 		eventStoreServices.AddEventReader(services, options);
 		eventStoreServices.AddEventWriter(services, options);
 		eventStoreServices.AddEventSerializer(services, options);
 		eventStoreServices.AddDbEventDescriptor(services);
+        eventStoreServices.AddEventStream(services, options);
 
 		var entryAssembly = Assembly.GetEntryAssembly();
         return services
@@ -56,7 +70,6 @@ public static class ServiceCollectionExtension
 		if (payloadMapperAssemblies != null)
 			serviceCollection.RegisterPayloadMappers(payloadMapperAssemblies);
 
-		
 		//TODO:
 		//serviceCollection.AddSingleton<ExecuteCommand>(provider => provider.GetRequiredService<CommandStream>().SendCommand);
 		//serviceCollection.AddSingleton<ExecuteCommandAndWaitUntilApplied>(provider => (command, processedStream) =>  provider.GetRequiredService<CommandStream>().SendCommandAndWaitUntilApplied(command, processedStream));
@@ -141,13 +154,14 @@ public static class ServiceCollectionExtension
 	}
 }
 
-public class EventStoreOptions
-{
-	public IReadOnlyCollection<Assembly>? PayloadAssemblies { get; set; }
-    public IReadOnlyCollection<Assembly>? PayloadMapperAssemblies { get; set; }
-}
-
 public sealed class CommandProcessorSubscription(IDisposable subscription) : IDisposable
 {
     public void Dispose() => subscription.Dispose();
+}
+
+public class EventStoreOptions
+{
+    public IReadOnlyCollection<Assembly>? PayloadAssemblies { get; set; }
+    public IReadOnlyCollection<Assembly>? PayloadMapperAssemblies { get; set; }
+    public long EventStreamStartingPosition { get; set; }
 }
