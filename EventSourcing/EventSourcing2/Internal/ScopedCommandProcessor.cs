@@ -1,7 +1,7 @@
 ﻿using System;
 using EventSourcing.Commands;
 
-namespace EventSourcing2.Internals;
+namespace EventSourcing2.Internal;
 
 public sealed class ScopedCommandProcessor : IDisposable
 {

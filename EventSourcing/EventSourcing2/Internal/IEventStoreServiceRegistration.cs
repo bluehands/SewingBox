@@ -1,7 +1,6 @@
-﻿using System;
-using Microsoft.Extensions.DependencyInjection;
+﻿using Microsoft.Extensions.DependencyInjection;
 
-namespace EventSourcing2.Internals;
+namespace EventSourcing2.Internal;
 
 public interface IEventStoreServiceRegistration<in TOptions>
 {

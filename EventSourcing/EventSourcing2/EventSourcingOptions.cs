@@ -94,8 +94,8 @@ public record EventSourcingCoreOptionsExtension(
 
     public void ApplyServices(IServiceCollection serviceCollection)
     {
-        var entryAssembly = Assembly.GetEntryAssembly();
-        serviceCollection.RegisterEventPayloads(PayloadAssemblies ?? entryAssembly.Yield());
-        serviceCollection.RegisterPayloadMappers(PayloadMapperAssemblies ?? entryAssembly.Yield());
+        serviceCollection.AddSingleton<EventSourcingContext>();
+        serviceCollection.RegisterEventPayloads(PayloadAssemblies ?? Assembly.GetEntryAssembly().Yield());
+        serviceCollection.RegisterPayloadMappers(PayloadMapperAssemblies ?? Assembly.GetEntryAssembly().Yield());
     }
 }

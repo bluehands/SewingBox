@@ -1,5 +1,6 @@
-﻿using EventSourcing2;
-using EventSourcing2.Internals;
+﻿using EventSourcing.Persistence.EntityFramework.Internal;
+using EventSourcing2;
+using EventSourcing2.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -82,6 +83,8 @@ public static class EntityFrameworkServices
 {
     public static IServiceCollection AddEntityFrameworkServices(this IServiceCollection services)
     {
+        services.AddTransient<IInitializer, DatabaseInitializer>();
+
         services.AddTransient<IEventReader<Event>, EventStore>();
         services.AddTransient<IEventWriter<Event>, EventStore>();
         services.AddTransient<IEventSerializer<string>, JsonEventSerializer>();

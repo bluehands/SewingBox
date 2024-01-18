@@ -11,7 +11,7 @@ namespace EventSourcing.Persistence.EntityFramework.SqlServer;
 
 static class Commands
 {
-    public static string SelectCommand(int maxRows) =>
+    public static string SelectCommand(uint maxRows) =>
         $"""
          SELECT TOP {maxRows}
          	[{nameof(Event.Position)}],
@@ -26,7 +26,7 @@ static class Commands
          """;
 }
 
-public class StoreRegistration
+public static class BrokerNotificationEventStream
 {
     class SqlServerExecutor : IDbExecutor
     {
@@ -42,7 +42,7 @@ public class StoreRegistration
         }
     }
 
-    public void AddEventStream(IServiceCollection services, int maxRowsPerSelect)
+    public static void AddEventStream(IServiceCollection services, uint maxRowsPerSelect)
     {
         services.AddSingleton(sp =>
         {
@@ -50,22 +50,22 @@ public class StoreRegistration
             var eventMapper = scope.ServiceProvider.GetRequiredService<IEventMapper<Event>>();
 
             var innerStream = ChangeListener.GetChangeStream(new SqlServerExecutor(sp), (lastPosition, connection) =>
-                {
-                    var cmd = connection.CreateCommand();
-                    cmd.CommandText = Commands.SelectCommand(maxRowsPerSelect);
-                    cmd.Parameters.Add(new($"@{nameof(Event.Position)}", SqlDbType.BigInt)
                     {
-                        Value = lastPosition
-                    });
-                    return cmd;
-                },
-                async (reader, state, _) =>
-                {
-                    var dbEvents = ReadEvents(reader);
-                    var result = await eventMapper.MapFromDbEvents(dbEvents).ToListAsync();
-                    var nextState = result.Count > 0 ? result[^1].Position : state;
-                    return (result, nextState);
-                }, 0L)
+                        var cmd = connection.CreateCommand();
+                        cmd.CommandText = Commands.SelectCommand(maxRowsPerSelect);
+                        cmd.Parameters.Add(new($"@{nameof(Event.Position)}", SqlDbType.BigInt)
+                        {
+                            Value = lastPosition
+                        });
+                        return cmd;
+                    },
+                    async (reader, state, _) =>
+                    {
+                        var dbEvents = ReadEvents(reader);
+                        var result = await eventMapper.MapFromDbEvents(dbEvents).ToListAsync();
+                        var nextState = result.Count > 0 ? result[^1].Position : state;
+                        return (result, nextState);
+                    }, 0L)
                 .SelectMany(l => l);
 
             return new EventStream<EventSourcing2.Event>(innerStream, scope);

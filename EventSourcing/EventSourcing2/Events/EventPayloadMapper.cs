@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
-using EventSourcing2.Internals;
+using EventSourcing2.Internal;
 
 namespace EventSourcing2.Events;
 

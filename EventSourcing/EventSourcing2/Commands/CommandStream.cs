@@ -9,10 +9,10 @@ using System.Threading;
 using System.Threading.Tasks;
 using EventSourcing.Commands;
 using EventSourcing2.Events;
-using EventSourcing2.Internals;
+using EventSourcing2.Internal;
 using FunicularSwitch;
 using Microsoft.Extensions.Logging;
-using AsyncLock = EventSourcing2.Internals.AsyncLock;
+using AsyncLock = EventSourcing2.Internal.AsyncLock;
 using Unit = FunicularSwitch.Unit;
 
 namespace EventSourcing2.Commands;

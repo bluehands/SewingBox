@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;
 using Microsoft.Extensions.Logging;
 
-namespace EventSourcing2.Internals;
+namespace EventSourcing2.Internal;
 
 static class ObservableExtension
 {

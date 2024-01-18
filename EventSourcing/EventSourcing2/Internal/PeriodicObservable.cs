@@ -5,7 +5,7 @@ using System.Reactive.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 
-namespace EventSourcing2.Internals;
+namespace EventSourcing2.Internal;
 
 public static class PeriodicObservable
 {

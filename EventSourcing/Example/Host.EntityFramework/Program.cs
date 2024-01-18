@@ -20,11 +20,14 @@ internal class Program
             {
                 //serviceCollection.AddSqlServerEventStore("Data Source=.\\SQLSERVEREXPRESS;Initial Catalog=TestEventStore2;Integrated Security=True;TrustServerCertificate=True;");
 
-                serviceCollection.AddEventSourcing(
-                    b =>
-                    {
-                        b.UseSqlServerEventStore("Data Source=.\\SQLSERVEREXPRESS;Initial Catalog=TestEventStore2;Integrated Security=True;TrustServerCertificate=True;");
-                    });
+                serviceCollection.AddEventSourcing(b => b.UseSqliteEventStore(@"Data Source=c:\temp\EventStore.db"));
+
+                //serviceCollection.AddEventSourcing(
+                //    b =>
+                //        b.UseSqlServerEventStore(
+                //            "Data Source=.\\SQLSERVEREXPRESS;Initial Catalog=TestEventStore2;Integrated Security=True;TrustServerCertificate=True;"
+                //        )
+                //);
 
                 //serviceCollection.AddSqliteEventStore(@"Data Source=c:\temp\EventStore.db");
             })
@@ -43,23 +46,23 @@ internal class Program
 
     static async Task TryIt(IServiceProvider services)
     {
-        //var eventStream = services.GetRequiredService<IObservable<Event>>();
-        //using var subscription = eventStream.Subscribe(@event =>
-        //{
-        //    if (@event.Position % 1000 == 0)
-        //        Console.WriteLine($"Received: {@event}");
-        //});
+        var eventStream = services.GetRequiredService<IObservable<Event>>();
+        using var subscription = eventStream.Subscribe(@event =>
+        {
+            if (@event.Position % 1000 == 0)
+                Console.WriteLine($"Received: {@event}");
+        });
 
-        //await services.StartEventSourcing();
+        await services.StartEventSourcing();
 
         var eventStore = services.GetRequiredService<IEventStore>();
 
-        //Console.WriteLine("Reading all events from store...");
-        //await foreach(var @event in eventStore.ReadEvents(0))
-        //{
-        //    if (@event.Position % 1000 == 0)
-        //        Console.WriteLine($"Read from store: {@event}");
-        //}
+        Console.WriteLine("Reading all events from store...");
+        await foreach (var @event in eventStore.ReadEvents(0))
+        {
+            if (@event.Position % 1000 == 0)
+                Console.WriteLine($"Read from store: {@event}");
+        }
 
         int i = 0;
         var cancellationToken = services.GetRequiredService<IHostApplicationLifetime>().ApplicationStopping;
@@ -70,7 +73,7 @@ internal class Program
                 await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
                 try
                 {
-                    var events = Enumerable.Range(0, 10000).Select(i => 
+                    var events = Enumerable.Range(0, 1000).Select(i => 
                             new MyFirstEvent($"Batch {i}", TextGenerator.RandomString(10, 1000)))
                         .ToList();
                     var sw = Stopwatch.StartNew();

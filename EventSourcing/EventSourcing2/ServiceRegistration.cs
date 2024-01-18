@@ -3,10 +3,11 @@ using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using EventSourcing.Commands;
 using EventSourcing2.Commands;
 using EventSourcing2.Events;
-using EventSourcing2.Internals;
+using EventSourcing2.Internal;
 using FunicularSwitch.Extensions;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -37,6 +38,11 @@ public static class ServiceCollectionExtension
         return serviceCollection;
     }
 
+    public static async Task StartEventSourcing(this IServiceProvider serviceProvider)
+    {
+        var eventSourcingContext = serviceProvider.GetRequiredService<EventSourcingContext>();
+        await eventSourcingContext.Initialize();
+    }
 
 	public static IServiceCollection AddEventSourcing<TOptions, TDbEvent, TSerializedPayload>(
         this IServiceCollection services, 

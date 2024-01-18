@@ -4,7 +4,7 @@ using System.Collections.Immutable;
 using System.Linq;
 using System.Threading.Tasks;
 using EventSourcing2;
-using EventSourcing2.Internals;
+using EventSourcing2.Internal;
 using FunicularSwitch.Extensions;
 using FunicularSwitch.Generators;
 
