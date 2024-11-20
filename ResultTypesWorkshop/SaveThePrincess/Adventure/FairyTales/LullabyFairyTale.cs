@@ -1,18 +1,19 @@
 ﻿using System.Collections.Immutable;
+using FunicularSwitch;
 using SaveThePrincess.Adventure.Entities;
 
 namespace SaveThePrincess.Adventure.FairyTales;
 
-internal abstract class NightmareFairyTale
+internal abstract class LullabyFairyTale
 {
-    protected Hero CallForAHero() =>
+    protected Result<Hero> CallForAHero() =>
         FairyTaleFactory.PickHero().Match(
             hero =>
             {
                 Console.WriteLine($"Once upon a time there was a {hero.Skill} named {hero.Name}.");
                 return hero;
             },
-            () => throw new Exception("Once upon a time there was no hero to find to save the princess ..."));
+            () => Result.Error<Hero>("Once upon a time there was no hero to find to save the princess ..."));
 
     protected Castle TravelToCastle(Hero hero)
     {
@@ -21,49 +22,43 @@ internal abstract class NightmareFairyTale
         return castle;
     }
 
-    protected ImmutableList<Enemy> EnterCastle(Hero hero, Castle castle)
+    protected Result<ImmutableList<Enemy>> EnterCastle(Hero hero, Castle castle)
     {
         Console.WriteLine($"When {hero.Name} tried to enter the castle, he was confronted by {castle.Enemies.Count} enemies");
         return castle.Enemies;
     }
 
-    protected Loot DefeatEnemies(Hero hero, ImmutableList<Enemy> enemies) =>
-        enemies.Any()
-            ? enemies.Select(e => DefeatEnemy(hero, e)).Aggregate(GatheringLoot)
-            : new Loot(0);
+    protected Result<IReadOnlyCollection<Loot>> DefeatEnemies(Hero hero, ImmutableList<Enemy> enemies) =>
+        enemies.Select(e => DefeatEnemy(hero, e)).Aggregate();
 
-    Loot DefeatEnemy(Hero hero, Enemy enemy)
+    Result<Loot> DefeatEnemy(Hero hero, Enemy enemy)
     {
         Console.WriteLine($"{hero.Name} is fighting against {enemy.GetType().Name}");
 
-        return hero.KillWithSword(enemy).Match(l =>
+        return hero.KillWithSword(enemy).Map(l =>
         {
             Console.WriteLine($"{enemy.GetType().Name} was defeated and dropped {l.Value}");
             return l;
-        }, error => throw new Exception(error));
+        });
     }
 
-    static Loot GatheringLoot(Loot a, Loot b) => new(a.Value + b.Value);
-
-    protected Princess? FreeThePrincess(Hero hero, Castle castle)
+    protected Result<Option<Princess>> FreeThePrincess(Hero hero, Castle castle)
     {
         if (castle.HasEnemies)
-            throw new Exception($"Hero {hero.Name} cannot free the princess, there are still enemies in the castle!");
+            return Result.Error<Option<Princess>>($"Hero {hero.Name} cannot free the princess, there are still enemies in the castle!");
 
-        return castle.Princess.GetValueOrDefault();
+        return castle.Princess;
     }
 
-    protected FairyTaleResult TravelingHome(Hero hero, Princess? princess, Loot loot)
-    {
-        if (princess != null)
+    protected Result<FairyTaleResult> TravelingHome(Hero hero, Option<Princess> princess, IReadOnlyCollection<Loot> loot) =>
+        princess.Match(p =>
+        {
+            Console.WriteLine($"Hero {hero.Name} found princess {p.Name} in the castle, they traveled home and together they lived happily ever after.");
+            return new FairyTaleResult(hero, princess, loot);
+        }, () =>
         {
             Console.WriteLine(
-                $"Hero {hero.Name} found princess {princess.Name} in the castle, they traveled home and together they lived happily ever after.");
+                $"Hero {hero.Name} didn't find a princess in the castle but he earned a shitload of looot ({loot.Sum(l => l.Value)}).");
             return new FairyTaleResult(hero, princess, loot);
-        }
-
-        Console.WriteLine(
-            $"Hero {hero.Name} didn't find a princess in the castle but he earned a shitload of many ({loot.Value}).");
-        return new FairyTaleResult(hero, null, loot);
-    }
+        });
 }

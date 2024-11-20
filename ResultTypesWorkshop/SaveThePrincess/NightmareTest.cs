@@ -12,7 +12,7 @@ public class NightmareTest
         var r = fairyTale.TellStory();
 
         r.Match(
-            ok => Console.WriteLine($"Fine! Hero '{ok.Hero.Name}' and princess '{ok.Princesses.GetValueOrDefault()?.Name}' and loot '{ok.Loot.Value}'"),
+            ok => Console.WriteLine($"Fine! Hero '{ok.Hero.Name}' and princess '{ok.Princesses.GetValueOrDefault()?.Name}' and loot '{ok.Loot.Sum(l => l.Value)}'"),
             Console.WriteLine);
 
         Assert.True(r.IsOk);
