@@ -6,6 +6,11 @@ namespace SaveThePrincess.Adventure;
 
 internal class LullabyFairyTaleImpl : LullabyFairyTale
 {
+    /**
+     * Use the methods in the LullabyFairyTale class to implements this method.
+     * The methods are all friendly and should never throw exceptions.
+     * It will be an easy task to be a hero.
+     */
     public Result<FairyTaleResult> TellStory()
     {
         // TODO: Looking for a hero which is brave enough for this adventure

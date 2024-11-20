@@ -6,6 +6,11 @@ namespace SaveThePrincess.Adventure;
 
 internal class NightmareFairyTaleImpl : NightmareFairyTale
 {
+    /**
+     * Use the methods in the NightmareFairyTale class to implements this method.
+     * The methods are all very evil and should always throw exceptions.
+     * It will be a difficult road to be a hero.
+     */
     public Result<FairyTaleResult> TellStory()
     {
         // TODO: Looking for a hero which is brave enough for this adventure

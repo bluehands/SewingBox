@@ -1,3 +1,4 @@
+using FunicularSwitch;
 using SaveThePrincess.Adventure;
 
 namespace SaveThePrincess;
@@ -15,6 +16,6 @@ public class NightmareTest
             ok => Console.WriteLine($"Fine! Hero '{ok.Hero.Name}' and princess '{ok.Princesses.GetValueOrDefault()?.Name}' and loot '{ok.Loot.Sum(l => l.Value)}'"),
             Console.WriteLine);
 
-        Assert.True(r.IsOk);
+        r.Should().BeOk();
     }
 }
