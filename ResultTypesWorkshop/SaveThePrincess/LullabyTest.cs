@@ -4,21 +4,12 @@ using Xunit.Abstractions;
 
 namespace SaveThePrincess;
 
-public class LullabyTest
+public class LullabyTest(ITestOutputHelper testOutputHelper)
 {
-    private readonly ITestOutputHelper testOutputHelper;
-
-    public LullabyTest(ITestOutputHelper testOutputHelper)
-    {
-        this.testOutputHelper = testOutputHelper;
-    }
-
     [Fact]
     public void TestCase()
     {
-        var logger =
-            new Meziantou.Extensions.Logging.Xunit.XUnitLogger(this.testOutputHelper, new LoggerExternalScopeProvider(),
-                null);
+        var logger = new Meziantou.Extensions.Logging.Xunit.XUnitLogger(testOutputHelper, new LoggerExternalScopeProvider(), null);
         var fairyTale = new LullabyFairyTaleImpl(logger);
 
         var r = fairyTale.TellStory();

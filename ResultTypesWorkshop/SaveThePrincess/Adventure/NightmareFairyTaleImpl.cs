@@ -1,10 +1,11 @@
 ﻿using FunicularSwitch;
+using Microsoft.Extensions.Logging;
 using SaveThePrincess.Adventure.Entities;
 using SaveThePrincess.Adventure.FairyTales;
 
 namespace SaveThePrincess.Adventure;
 
-internal class NightmareFairyTaleImpl : NightmareFairyTale
+internal class NightmareFairyTaleImpl(ILogger logger) : NightmareFairyTale(logger)
 {
     /**
      * Use the methods in the NightmareFairyTale class to implements this method.
