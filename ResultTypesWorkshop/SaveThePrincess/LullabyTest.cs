@@ -16,6 +16,6 @@ public class LullabyTest
             ok => Console.WriteLine($"Fine! Hero '{ok.Hero.Name}' and princess '{ok.Princesses.GetValueOrDefault()?.Name}' and loot '{ok.Loot.Sum(l => l.Value)}'"),
             Console.WriteLine);
 
-        r.Should().BeOk();
+        Assert.True(r.IsOk);
     }
 }
