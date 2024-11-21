@@ -1,4 +1,5 @@
 ﻿using FunicularSwitch;
+using Microsoft.Extensions.Logging;
 using SaveThePrincess.Adventure.Entities;
 using SaveThePrincess.Adventure.FairyTales;
 
@@ -6,6 +7,10 @@ namespace SaveThePrincess.Adventure;
 
 internal class LullabyFairyTaleImpl : LullabyFairyTale
 {
+    public LullabyFairyTaleImpl(ILogger logger) : base(logger)
+    {
+    }
+
     /**
      * Use the methods in the LullabyFairyTale class to implements this method.
      * The methods are all friendly and should never throw exceptions.
