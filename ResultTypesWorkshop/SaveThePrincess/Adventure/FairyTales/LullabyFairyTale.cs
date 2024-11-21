@@ -28,8 +28,14 @@ internal abstract class LullabyFairyTale
         return castle.Enemies;
     }
 
-    protected Result<IReadOnlyCollection<Loot>> DefeatEnemies(Hero hero, ImmutableList<Enemy> enemies) =>
-        enemies.Select(e => DefeatEnemy(hero, e)).Aggregate();
+    protected Result<IReadOnlyCollection<Loot>> DefeatEnemies(Hero hero, ImmutableList<Enemy> enemies)
+    {
+        var finalResult = enemies.Aggregate(
+            Result.Ok<ImmutableList<Loot>>([]),
+            (current, enemy) => current.Bind(loot => DefeatEnemy(hero, enemy).Map(loot.Add)));
+
+        return finalResult.Map<IReadOnlyCollection<Loot>>(l => l);
+    }
 
     Result<Loot> DefeatEnemy(Hero hero, Enemy enemy)
     {
