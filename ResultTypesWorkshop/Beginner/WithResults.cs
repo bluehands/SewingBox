@@ -3,6 +3,8 @@ using FluentAssertions;
 
 namespace Beginner;
 
+using ResultCastle;
+
 [TestClass]
 public sealed class WithResults
 {
