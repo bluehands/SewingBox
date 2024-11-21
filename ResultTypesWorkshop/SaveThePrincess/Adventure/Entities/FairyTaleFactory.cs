@@ -31,7 +31,7 @@ class FairyTaleFactory
     {
         "Olaf",
         "Horst",
-        "Siegfired"
+        "Siegfried"
     };
 
     static IList<Option<Princess>> GetPrincessList() => new[]
