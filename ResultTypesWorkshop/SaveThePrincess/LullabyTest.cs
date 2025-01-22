@@ -1,14 +1,16 @@
-using FunicularSwitch;
+using Microsoft.Extensions.Logging;
 using SaveThePrincess.Adventure;
+using Xunit.Abstractions;
 
 namespace SaveThePrincess;
 
-public class LullabyTest
+public class LullabyTest(ITestOutputHelper testOutputHelper)
 {
     [Fact]
     public void TestCase()
     {
-        var fairyTale = new LullabyFairyTaleImpl();
+        var logger = new Meziantou.Extensions.Logging.Xunit.XUnitLogger(testOutputHelper, new LoggerExternalScopeProvider(), null);
+        var fairyTale = new LullabyFairyTaleImpl(logger);
 
         var r = fairyTale.TellStory();
 
