@@ -57,4 +57,7 @@ public readonly struct Writer<T, E>
         var combined = oldElements.AddRange(newElements);
         return new Writer<R, E>(v, combined);
     }
+    
+    public Writer<T, E> Write(E element) => Write(currentValue, ImmutableList.Create(element));
+    public Writer<T, E> Write(IImmutableList<E> elements) => Write(currentValue, elements);
 }
