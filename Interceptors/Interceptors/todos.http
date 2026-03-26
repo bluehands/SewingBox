@@ -1,0 +1,24 @@
+@HostAddress = http://localhost:5044
+@todo_id = c705ba30-d78f-4f71-aa63-6a69affeac41
+
+### GET All Todos
+GET {{HostAddress}}/todos
+
+### CREATE a Todo
+POST {{HostAddress}}/todos
+Content-Type: application/json
+
+{
+  "title": "Implement Todo API"
+}
+
+### UPDATE a Todo
+PUT {{HostAddress}}/todos/{{todo_id}}
+Content-Type: application/json
+
+{
+  "isCompleted": true
+}
+
+### DELETE a Todo
+DELETE {{HostAddress}}/todos/{{todo_id}}
