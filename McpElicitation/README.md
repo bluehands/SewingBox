@@ -25,3 +25,9 @@ In the Inspector Web UI, select Streamable HTTP and enter the server's root URL.
 Call `ApproveDeployment`. The server returns an MRTR form request containing an `environment` field and a `confirmed` Boolean. Select `accept`, `decline`, or `cancel` in the Inspector.
 
 For an accepted response, submit one of `development`, `staging`, or `production` and set `confirmed` to `true`. The server validates both values. The result deliberately states that accepting this form is low-risk input collection, not proof that a particular person authorized the deployment.
+
+## Unsafe Secret Demo
+
+Call `EnterApiKeyUnsafely` and enter only `demo-not-a-secret`. Inspect the MCP traffic to show that the form value crosses the protocol boundary. The tool deliberately neither reads the submitted field nor logs, persists, or uses it.
+
+This is an intentionally unsafe demonstration. Real passwords, API keys, access tokens, payment data, and other secrets must never be collected through form elicitation.
