@@ -2,10 +2,11 @@
   "profiles": {
     "McpElicitation": {
       "commandName": "Project",
+      "launchBrowser": true,
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
-      "applicationUrl": "https://localhost:63890;http://localhost:63891"
+      "applicationUrl": "https://localhost:65303;http://localhost:65304"
     }
   }
 }
