@@ -5,10 +5,19 @@ A .NET 10 MCP server used to demonstrate form and URL elicitation.
 ## Run
 
 ```powershell
-dotnet run
+dotnet run --project .\McpElicitation\McpElicitation.csproj
 ```
 
 The server exposes Streamable HTTP MCP at `https://localhost:<port>/`. The startup output shows the selected port.
+
+## Project Structure
+
+- `McpElicitation.slnx`: solution entry point.
+- `McpElicitation/Program.cs`: application setup, MCP registration, and request logging.
+- `McpElicitation/Tools/01 HelloWorldTools.cs`: the `Hello` tool.
+- `McpElicitation/Tools/02 DeploymentTools.cs`: the form approval demo.
+- `McpElicitation/Tools/03 UnsafeDemoTools.cs`: the unsafe secret-entry demonstration.
+- `McpElicitation/Tools/04 TransferTools.cs`: the URL approval demo, browser endpoints, and in-memory approval store.
 
 ## Connect with MCP Inspector
 

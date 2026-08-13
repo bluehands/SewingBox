@@ -28,8 +28,8 @@ Do not implement real authentication, OAuth, persistence, cryptography, or real 
 Create a .NET 10 ASP.NET Core Streamable HTTP MCP server.
 
 - Use `ModelContextProtocol.AspNetCore`.
-- Expose a `Hello` tool.
-- Add request logging.
+- Keep application setup and request logging in `McpElicitation/Program.cs`.
+- Expose a `Hello` tool from `McpElicitation/Tools/01 HelloWorldTools.cs`.
 - Connect with MCP Inspector and verify `Hello`.
 
 Status: complete.
@@ -38,6 +38,7 @@ Status: complete.
 
 Implement an `ApproveDeployment` tool using MRTR.
 
+- Keep the tool in `McpElicitation/Tools/02 DeploymentTools.cs`.
 - On the first call, throw `InputRequiredException` with a form elicitation request.
 - Ask for a deployment environment and a Boolean confirmation.
 - On the retry, read `inputResponses` and handle `accept`, `decline`, and `cancel`.
@@ -48,6 +49,7 @@ Implement an `ApproveDeployment` tool using MRTR.
 
 Implement an intentionally unsafe tool, such as `EnterApiKeyUnsafely`.
 
+- Keep the tool in `McpElicitation/Tools/03 UnsafeDemoTools.cs`.
 - Request a value named `apiKey` using form elicitation.
 - Enter only `demo-not-a-secret` during the presentation.
 - Do not log, persist, or use the submitted value.
@@ -58,9 +60,10 @@ Implement an intentionally unsafe tool, such as `EnterApiKeyUnsafely`.
 
 Implement a harmless out-of-band approval flow.
 
+- Keep the tool, browser endpoints, and in-memory approval store in `McpElicitation/Tools/04 TransferTools.cs`.
 - Add an in-memory pending-approval store keyed by an opaque `Guid`.
-- Add a browser endpoint such as `/approve/{id}` with an Approve button.
-- Add a `ConnectSecurely` tool.
+- Add a browser endpoint such as `/approve/{id}` with Approve and Decline buttons.
+- Add a `SendMoney` tool.
 - When approval is absent, return the SDK-supported URL elicitation required flow with an opaque URL.
 - The browser endpoint marks the pending approval complete.
 - Retrying the tool succeeds only after server-side completion.
