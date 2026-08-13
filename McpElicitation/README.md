@@ -31,3 +31,11 @@ For an accepted response, submit one of `development`, `staging`, or `production
 Call `EnterApiKeyUnsafely` and enter only `demo-not-a-secret`. Inspect the MCP traffic to show that the form value crosses the protocol boundary. The tool deliberately neither reads the submitted field nor logs, persists, or uses it.
 
 This is an intentionally unsafe demonstration. Real passwords, API keys, access tokens, payment data, and other secrets must never be collected through form elicitation.
+
+## URL Approval Demo
+
+Call `SendMoney` with a `receiver` and positive `amount`. The client receives a URL elicitation-required response. Its opaque browser URL displays the stored transfer details and offers **Approve** and **Decline**. Let Inspector retry the unchanged tool call after choosing an outcome.
+
+The server consumes only a completed approval record whose stored receiver and amount exactly match the retried call. It returns the recorded approved or declined outcome. The demo permits only one pending transfer for an identical receiver and amount pair, because those unchanged arguments are the available retry correlation values.
+
+The browser approval data stays outside the MCP client and LLM context. This in-memory demo is deliberately not production-secure: it has no authentication, user or operation binding, expiry, persistent audit record, or replay protection.
